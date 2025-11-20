@@ -35,6 +35,7 @@ jobs:
           # <-- sandboxname: "CI-Sandbox"
           
       - name: Download Veracode Scan Results
+        if: always()
         run: |
           java -jar VeracodeJavaAPI.jar \
           -appname "Verademo-Test" \
@@ -51,6 +52,7 @@ jobs:
           path: results.xml
 
       - name: Fail if high severity found
+        if: always()
         run: |
           if grep -q 'Severity="High"' results.xml; then
             echo "High severity vulnerability detected!"
