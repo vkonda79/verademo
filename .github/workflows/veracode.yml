@@ -1,4 +1,4 @@
-name: Veracode Scan
+name: Veracode Upload & Scan
 
 on:
   workflow_dispatch:
@@ -18,14 +18,15 @@ jobs:
         run: |
           zip -r app.zip .
 
-      - name: Veracode Upload and Scan
+      - name: Veracode Upload & Scan
         uses: veracode/veracode-uploadandscan-action@0.2.10
         with:
-          vid: ${{ secrets.VERACODE_API_ID }}
-          vkey: ${{ secrets.VERACODE_API_KEY }}
           appname: "Verademo-Test"
           createprofile: true
           filepath: "app.zip"
           version: "github-build-${{ github.run_id }}"
-          scanpollingwait: 60
-          scantimeout: 120
+          vid: ${{ secrets.VERACODE_API_ID }}
+          vkey: ${{ secrets.VERACODE_API_KEY }}
+          scantimeout: 120               # optional: max minutes to wait for scan
+          scanpollinginterval: 60       # optional: poll every 60s
+          deleteincompletescan: true    # optional: auto remove incomplete scans
