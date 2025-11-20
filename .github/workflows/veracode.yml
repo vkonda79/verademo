@@ -44,8 +44,18 @@ jobs:
           -version "github-build-${{ github.run_id }}" \
           -output results.xml
 
-      - name: Upload scan results
-        uses: actions/upload-artifact@v3
+      - name: Upload Veracode Results Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: veracode-scan-results
           path: results.xml
+
+      - name: Fail if high severity found
+        run: |
+          if grep -q 'Severity="High"' results.xml; then
+            echo "High severity vulnerability detected!"
+            exit 1
+          fi
+          name: veracode-scan-results
+          path: results.xml
+          
