@@ -18,7 +18,7 @@ jobs:
           echo "Optional build steps go here"
 
       - name: Upload & scan with Veracode (Upload & Scan Java wrapper)
-        uses: veracode/veracode-uploadandscan-action@v1
+        uses: veracode/veracode-uploadandscan-action@v0.2.11
         with:
           appname: "Verademo-Test"         # the application name in Veracode
           createprofile: false             # set false because you already created the app
