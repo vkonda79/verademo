@@ -1,0 +1,69 @@
+name: Veracode Full Scan
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  veracode_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      ############################################################
+      # 1️⃣ PACKAGE YOUR APP (ZIP)
+      ############################################################
+      - name: Package application
+        run: |
+          mkdir package
+          zip -r package/app.zip ./*
+
+      ############################################################
+      # 2️⃣ UPLOAD TO VERACODE (STATIC SCAN)
+      ############################################################
+      - name: Veracode Upload & Scan
+        uses: veracode/veracode-upload-api-action@v2
+        with:
+          filepath: "package/app.zip"
+          appname: "Verademo-Test"
+          createprofile: true
+          sandboxname: "CI-Sandbox"
+          scanpollingwait: 120
+          scantimeout: 120
+          vid: ${{ secrets.VERACODE_API_ID }}
+          vkey: ${{ secrets.VERACODE_API_KEY }}
+
+      ############################################################
+      # 3️⃣ WAIT UNTIL SCAN COMPLETES  
+      ############################################################
+      - name: Wait for Veracode Scan to Complete
+        uses: veracode/veracode-waitforpolicyaction@v1
+        with:
+          appname: "Verademo-Test"
+          vid: ${{ secrets.VERACODE_API_ID }}
+          vkey: ${{ secrets.VERACODE_API_KEY }}
+
+      ############################################################
+      # 4️⃣ RUN SCA (SOFTWARE COMPOSITION ANALYSIS)
+      ############################################################
+      - name: Software Composition Analysis (SCA)
+        uses: veracode/veracode-sca@v2
+        with:
+          vid: ${{ secrets.VERACODE_API_ID }}
+          vkey: ${{ secrets.VERACODE_API_KEY }}
+          path: "."
+          fail_on_severity: "high"
+
+      ############################################################
+      # 5️⃣ DOWNLOAD ARTIFACTS  
+      ############################################################
+      - name: Download Veracode Scan Results
+        uses: veracode/veracode-download-scan-results-action@v1
+        with:
+          vid: ${{ secrets.VERACODE_API_ID }}
+          vkey: ${{ secrets.VERACODE_API_KEY }}
+          appname: "Verademo-Test"
