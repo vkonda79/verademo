@@ -26,6 +26,3 @@ jobs:
           version: "${{ github.run_id }}"  # useful to differentiate uploads
           vid: ${{ secrets.VERACODE_API_ID }}
           vkey: ${{ secrets.VERACODE_API_SECRET }}
-
-
-
