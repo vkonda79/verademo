@@ -23,10 +23,13 @@ jobs:
         with:
           appname: "Verademo-Test"
           createprofile: false
-          filepath: "app.zip"
+          filepath: "./"
           version: "github-build-${{ github.run_id }}"
           vid: ${{ secrets.VERACODE_API_ID }}
           vkey: ${{ secrets.VERACODE_API_KEY }}
           scantimeout: 120               # optional: max minutes to wait for scan
           scanpollinginterval: 60       # optional: poll every 60s
           deleteincompletescan: true    # optional: auto remove incomplete scans
+          maxretrycount: 5
+          # <-- createsandbox: true            # <-- create the sandbox if it doesn't exist
+          sandboxname: "CI-Sandbox"
