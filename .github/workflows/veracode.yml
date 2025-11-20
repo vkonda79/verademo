@@ -32,4 +32,20 @@ jobs:
           deleteincompletescan: true    # optional: auto remove incomplete scans
           maxretrycount: 5
           # <-- createsandbox: true            # <-- create the sandbox if it doesn't exist
-          sandboxname: "CI-Sandbox"
+          # <-- sandboxname: "CI-Sandbox"
+          
+      - name: Download Veracode Scan Results
+        run: |
+          java -jar VeracodeJavaAPI.jar \
+          -appname "Verademo-Test" \
+          -vid ${{ secrets.VERACODE_API_ID }} \
+          -vkey ${{ secrets.VERACODE_API_KEY }} \
+          -action getbuildinfo \
+          -version "github-build-${{ github.run_id }}" \
+          -output results.xml
+
+      - name: Upload scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: veracode-scan-results
+          path: results.xml
