@@ -34,17 +34,18 @@ jobs:
           # <-- createsandbox: true            # <-- create the sandbox if it doesn't exist
           # <-- sandboxname: "CI-Sandbox"
           
-      - name: Download Veracode Scan Results
+      - name: Download Veracode Results
         if: always()
+        shell: bash
         run: |
           java -jar VeracodeJavaAPI.jar \
-          -appname "Verademo-Test" \
+          -action getbuildinfo \
+          -appid 2141718 \
+          -version "github-build-${{ github.run_id }}" \
           -vid ${{ secrets.VERACODE_API_ID }} \
           -vkey ${{ secrets.VERACODE_API_KEY }} \
-          -action getbuildinfo \
-          -version "github-build-${{ github.run_id }}" \
-          -output results.xml
-
+          -format xml > results.xml
+          
       - name: Upload Veracode Results Artifact
         uses: actions/upload-artifact@v4
         with:
