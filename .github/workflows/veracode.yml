@@ -19,10 +19,10 @@ jobs:
           zip -r app.zip .
 
       - name: Veracode Upload & Scan
-        uses: veracode/veracode-uploadandscan-action@0.2.10
+        uses: veracode/veracode-uploadandscan-action@0.2.11
         with:
           appname: "Verademo-Test"
-          createprofile: true
+          createprofile: false
           filepath: "app.zip"
           version: "github-build-${{ github.run_id }}"
           vid: ${{ secrets.VERACODE_API_ID }}
