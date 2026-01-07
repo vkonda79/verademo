@@ -24,11 +24,22 @@ jobs:
           VERACODE_API_KEY_ID: ${{ secrets.VERACODE_API_ID }}
           VERACODE_API_KEY_SECRET: ${{ secrets.VERACODE_API_SECRET }}
         run: |
-          # 1. Zip the current directory (excluding hidden git files)
+          # Zip the current directory (excluding hidden git files)
           zip -r project.zip . -x "*.git*"
           
-          # 2. Point the CLI to the zip file instead of the directory "."
+          # Run Veracode SAST scan
           veracode static scan project.zip \
             --results-file veracode_results.json \
             --fail-on-severity="Very High, High"
           
+          # Generate PDF report
+          veracode static report project.zip \
+            --format pdf \
+            --output veracode_report.pdf
+
+      # 4. Upload PDF report as an artifact
+      - name: Upload Veracode PDF Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: veracode-report
+          path: veracode_report.pdf
