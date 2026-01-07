@@ -1,17 +1,10 @@
-name: Veracode Static Scan
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-jobs:
-  veracode-scan:
+  pdf-report:
+    needs: pipeline-scan
     runs-on: ubuntu-latest
 
     env:
       VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-      VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
+      VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
       APP_NAME: "Verademo-Test"
       SANDBOX_NAME: "CI-Sandbox"
 
@@ -24,20 +17,14 @@ jobs:
           curl -fsS https://tools.veracode.com/veracode-cli/install | sh
           echo "$HOME/.veracode/bin" >> $GITHUB_PATH
 
-      - name: Package application
-        run: |
-          veracode package \
-            --source . \
-            --output veracode-artifact.zip
-
-      - name: Upload and Scan (Sandbox)
+      - name: Upload & Scan (Sandbox)
         run: |
           veracode uploadandscan \
             --appname "$APP_NAME" \
             --sandboxname "$SANDBOX_NAME" \
             --createprofile true \
             --createsandbox true \
-            --filepath veracode-artifact.zip \
+            --filepath pipeline-artifact.zip \
             --version "GitHub-${{ github.run_number }}" \
             --wait true
 
@@ -48,10 +35,10 @@ jobs:
             --appname "$APP_NAME" \
             --sandboxname "$SANDBOX_NAME" \
             --format pdf \
-            --output reports/Veracode-Static-Scan.pdf
+            --output reports/Veracode-Scan.pdf
 
-      - name: Upload PDF Report as Artifact
+      - name: Upload PDF Report
         uses: actions/upload-artifact@v4
         with:
           name: Veracode-PDF-Report
-          path: reports/Veracode-Static-Scan.pdf
+          path: reports/Veracode-Scan.pdf
