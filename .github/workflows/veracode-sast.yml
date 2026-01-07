@@ -25,19 +25,19 @@ jobs:
           # Add repo workspace to PATH (where veracode is installed)
           echo "$GITHUB_WORKSPACE" >> $GITHUB_PATH
 
-      - name: Verify Veracode CLI
+      - name: Confirm Veracode CLI
         run: |
-           which veracode || true
-           veracode --version
-
+          which veracode
+          veracode package --help | grep -E "trust|yes"
 
       - name: Package application
         run: |
+          set -e
           veracode package \
-            --source . \
-            --output veracode-artifact.zip
-            --trust
-
+            --source "$GITHUB_WORKSPACE" \
+            --output veracode-artifact.zip \
+            --trust \
+            --verbose
 
       - name: Run Pipeline Scan
         run: |
