@@ -22,7 +22,7 @@ jobs:
           VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
           VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
         run: |
-          ./veracode static scan . \
+          ./veracode static upload . \
             --app "Verademo-Test" \
             --sandbox "CI-Sandbox" \
             --create-profile true \
