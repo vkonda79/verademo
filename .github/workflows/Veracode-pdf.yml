@@ -32,7 +32,7 @@ jobs:
           VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
         run: |
           # Run the static scan
-          veracode-cli/veracode --action scan \
+          veracode-cli/pipeline-cli --action scan \
             --appname "Verademo-Test" \
             --createprofile false \
             --filepath app.zip \
@@ -48,7 +48,7 @@ jobs:
           VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
           VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
         run: |
-          veracode-cli/veracode --action getreport \
+          veracode-cli/pipeline-cli --action getreport \
             --appname "Verademo-Test" \
             --version "github-build-${{ github.run_id }}" \
             --reportformat PDF \
@@ -67,7 +67,7 @@ jobs:
           VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
           VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
         run: |
-          veracode-cli/veracode --action getbuildinfo \
+          veracode-cli/pipeline-cli --action getbuildinfo \
             --appname "Verademo-Test" \
             --version "github-build-${{ github.run_id }}" \
             --reportformat XML \
