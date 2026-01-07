@@ -1,47 +1,57 @@
-name: Veracode Static Analysis
+name: Veracode Static Scan
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch: # Allows manual triggering
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   veracode-scan:
     runs-on: ubuntu-latest
+
+    env:
+      VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
+      VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
+      APP_NAME: "Verademo-Test"
+      SANDBOX_NAME: "CI-Sandbox"
+
     steps:
-      - name: Check out code
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Install Veracode CLI
         run: |
           curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-          ./veracode version
+          echo "$HOME/.veracode/bin" >> $GITHUB_PATH
 
-      - name: Veracode Static Scan
-        env:
-          VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-          VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
+      - name: Package application
         run: |
-          ./veracode static package . \
-            --app "Verademo-Test" \
-            --sandbox "CI-Sandbox" \
-            --create-profile true \
-            --wait
+          veracode package \
+            --source . \
+            --output veracode-artifact.zip
 
-      - name: Download PDF Report
-        env:
-          VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-          VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
+      - name: Upload and Scan (Sandbox)
         run: |
-          # This command fetches the latest build report for the specific app/sandbox
-          ./veracode static get-report \
-            --app "Verademo-Test" \
-            --sandbox "CI-Sandbox" \
+          veracode uploadandscan \
+            --appname "$APP_NAME" \
+            --sandboxname "$SANDBOX_NAME" \
+            --createprofile true \
+            --createsandbox true \
+            --filepath veracode-artifact.zip \
+            --version "GitHub-${{ github.run_number }}" \
+            --wait true
+
+      - name: Generate PDF Report
+        run: |
+          mkdir -p reports
+          veracode report create \
+            --appname "$APP_NAME" \
+            --sandboxname "$SANDBOX_NAME" \
             --format pdf \
-            --output report.pdf
+            --output reports/Veracode-Static-Scan.pdf
 
-      - name: Upload Report Artifact
+      - name: Upload PDF Report as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Veracode-PDF-Report
-          path: report.pdf
+          path: reports/Veracode-Static-Scan.pdf
