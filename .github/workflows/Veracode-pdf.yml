@@ -23,9 +23,7 @@ jobs:
       # 3. Install Veracode CLI
       - name: Install Veracode CLI
         run: |
-          curl -L https://downloads.veracode.com/securityscan/pipeline-cli-LATEST.zip -o pipeline-cli.zip
-          unzip -o pipeline-cli.zip -d veracode-cli
-          chmod +x veracode-cli/veracode
+          curl -sSL https://tools.veracode.com/veracode-cli/install | sh
 
       # 4. Run Veracode CLI scan
       - name: Run Veracode CLI Scan
