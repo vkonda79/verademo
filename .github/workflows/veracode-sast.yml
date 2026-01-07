@@ -26,7 +26,6 @@ jobs:
         run: |
           veracode static scan . \
             --results-file veracode_results.json \
-            --wait \
             --fail-on-severity="Very High, High"
 
       # 4. Save the results as a GitHub artifact for review
