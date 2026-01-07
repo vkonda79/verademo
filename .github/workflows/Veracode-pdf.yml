@@ -1,0 +1,92 @@
+name: Veracode CLI Scan Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  veracode:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Package application
+      - name: Package application
+        run: |
+          zip -r app.zip .
+
+      # 3. Install Veracode CLI
+      - name: Install Veracode CLI
+        run: |
+          curl -L https://downloads.veracode.com/securityscan/pipeline-cli-LATEST.zip -o pipeline-cli.zip
+          unzip -o pipeline-cli.zip -d veracode-cli
+          chmod +x veracode-cli/veracode
+
+      # 4. Run Veracode CLI scan
+      - name: Run Veracode CLI Scan
+        env:
+          VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
+          VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
+        run: |
+          # Run the static scan
+          veracode-cli/veracode --action scan \
+            --appname "Verademo-Test" \
+            --createprofile false \
+            --filepath app.zip \
+            --version "github-build-${{ github.run_id }}" \
+            --sandboxname "CI-Sandbox" \
+            --deleteincompletescan true \
+            --scantimeout 120 \
+            --scanpollinginterval 60
+
+      # 5. Download PDF report
+      - name: Download Veracode PDF Report
+        env:
+          VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
+          VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
+        run: |
+          veracode-cli/veracode --action getreport \
+            --appname "Verademo-Test" \
+            --version "github-build-${{ github.run_id }}" \
+            --reportformat PDF \
+            --reportfile veracode-report.pdf
+
+      # 6. Upload PDF artifact
+      - name: Upload Veracode PDF Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode-pdf-report
+          path: veracode-report.pdf
+
+      # 7. Download XML build info (optional)
+      - name: Download Veracode XML Build Info
+        env:
+          VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
+          VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
+        run: |
+          veracode-cli/veracode --action getbuildinfo \
+            --appname "Verademo-Test" \
+            --version "github-build-${{ github.run_id }}" \
+            --reportformat XML \
+            --reportfile results.xml
+
+      # 8. Upload XML artifact
+      - name: Upload Veracode XML Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode-xml-results
+          path: results.xml
+
+      # 9. Fail pipeline if high severity found
+      - name: Fail pipeline if high severity found
+        if: always()
+        run: |
+          if grep -q 'Severity="High"' results.xml; then
+            echo "High severity vulnerability detected!"
+            exit 1
+          fi
