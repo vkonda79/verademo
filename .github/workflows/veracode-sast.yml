@@ -1,4 +1,4 @@
-name: Veracode SAST – Upload & PDF
+name: Veracode SAST – GitHub Action
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  package-and-scan:
+  veracode-scan:
     runs-on: ubuntu-latest
 
     env:
@@ -21,49 +21,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Install Veracode CLI
-      - name: Install Veracode CLI
-        run: |
-          curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-          echo "$GITHUB_WORKSPACE" >> $GITHUB_PATH
-
-      - name: Verify Veracode CLI
-        run: |
-          which veracode
-          veracode --version
-
-      # 3️⃣ Package the application (non-interactive)
+      # 2️⃣ Package application
       - name: Package application
         run: |
-          veracode package \
-            --source "$GITHUB_WORKSPACE" \
-            --output veracode-artifact.zip \
-            --trust \
-            --verbose
+          zip -r veracode-artifact.zip .
 
-      # 4️⃣ Upload and Scan to Sandbox
-      - name: Upload & Scan (Sandbox)
-        run: |
-          veracode uploadandscan \
-            --appname "$APP_NAME" \
-            --sandboxname "$SANDBOX_NAME" \
-            --createprofile true \
-            --createsandbox true \
-            --filepath veracode-artifact.zip \
-            --version "GitHub-${{ github.run_number }}" \
-            --wait true
+      # 3️⃣ Run Veracode Scan (uploadandscan + PDF)
+      - name: Veracode Upload & Scan
+        uses: veracode/veracode-cli-action@v1
+        with:
+          app_name: ${{ env.APP_NAME }}
+          sandbox_name: ${{ env.SANDBOX_NAME }}
+          filepath: veracode-artifact.zip
+          version: GitHub-${{ github.run_number }}
+          create_sandbox: true
+          create_profile: true
+          wait_for_scan: true
+          report_format: pdf
+          report_path: reports/Veracode-Sandbox-Scan.pdf
 
-      # 5️⃣ Generate PDF report
-      - name: Generate PDF Report
-        run: |
-          mkdir -p reports
-          veracode report create \
-            --appname "$APP_NAME" \
-            --sandboxname "$SANDBOX_NAME" \
-            --format pdf \
-            --output reports/Veracode-Sandbox-Scan.pdf
-
-      # 6️⃣ Upload artifacts
+      # 4️⃣ Upload PDF and artifact
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
