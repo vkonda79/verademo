@@ -1,62 +1,47 @@
-name: Veracode SAST Update
+name: Veracode Static Analysis
 
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
-  veracode-cli-scan:
+  veracode-scan:
     runs-on: ubuntu-latest
     steps:
-      # 1. Checkout the repo
-      - name: Checkout Code
+      - name: Check out code
         uses: actions/checkout@v4
 
-      # 2. Install Veracode CLI
       - name: Install Veracode CLI
         run: |
           curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-          sudo mv ./veracode /usr/local/bin/
+          ./veracode version
 
-      # 3. Run SAST Scan
-      - name: Run SAST Scan
+      - name: Veracode Static Scan
         env:
-          VERACODE_API_KEY_ID: ${{ secrets.VERACODE_API_ID }}
-          VERACODE_API_KEY_SECRET: ${{ secrets.VERACODE_API_SECRET }}
+          VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
+          VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
         run: |
-          zip -r project.zip . -x "*.git*"
-          
-          # Run scan
-          veracode static scan project.zip \
-            --results-file veracode_results.json \
-            --fail-on-severity="Very High, High"
+          ./veracode static scan . \
+            --app "Verademo-Test" \
+            --sandbox "CI-Sandbox" \
+            --create-profile true \
+            --wait
 
-          # Optional: Save filtered results
-          veracode static results filter veracode_results.json \
-            --severity "Very High,High" \
-            --output filtered-results.json
-
-      # 4. Download PDF report using Veracode API
-      - name: Download Veracode PDF Report
+      - name: Download PDF Report
         env:
-          VERACODE_API_KEY_ID: ${{ secrets.VERACODE_API_ID }}
-          VERACODE_API_KEY_SECRET: ${{ secrets.VERACODE_API_SECRET }}
+          VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
+          VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
         run: |
-          # Set variables
-          APP_NAME="Verademo-Test"
-          REPORT_NAME="veracode_report.pdf"
-          
-          # Use Veracode API to request PDF report
-          curl -u $VERACODE_API_KEY_ID:$VERACODE_API_KEY_SECRET \
-            -X GET "https://analysiscenter.veracode.com/api/5.0/detailedreport.do?app_name=$APP_NAME" \
-            -o $REPORT_NAME || echo "PDF download failed. Check app name & permissions."
+          # This command fetches the latest build report for the specific app/sandbox
+          ./veracode static get-report \
+            --app "Verademo-Test" \
+            --sandbox "CI-Sandbox" \
+            --format pdf \
+            --output report.pdf
 
-      # 5. Upload results as artifacts
-      - name: Upload Veracode Artifacts
+      - name: Upload Report Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: veracode-results
-          path: |
-            veracode_results.json
-            filtered-results.json
-            veracode_report.pdf
+          name: Veracode-PDF-Report
+          path: report.pdf
