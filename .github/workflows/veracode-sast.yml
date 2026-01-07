@@ -1,4 +1,51 @@
+name: Veracode SAST – Pipeline + PDF
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pipeline-scan:
+    runs-on: ubuntu-latest
+
+    env:
+      VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
+      VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Veracode CLI
+        run: |
+          curl -fsS https://tools.veracode.com/veracode-cli/install | sh
+          echo "$HOME/.veracode/bin" >> $GITHUB_PATH
+
+      - name: Package application
+        run: |
+          veracode package \
+            --source . \
+            --output veracode-artifact.zip
+
+      - name: Run Pipeline Scan
+        run: |
+          veracode pipeline scan \
+            --file veracode-artifact.zip \
+            --fail-on-severity High \
+            --json_output pipeline-results.json
+
+      - name: Upload Pipeline Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-artifact
+          path: |
+            veracode-artifact.zip
+            pipeline-results.json
+
   pdf-report:
+    name: Sandbox Upload & PDF Report
     needs: pipeline-scan
     runs-on: ubuntu-latest
 
@@ -9,8 +56,10 @@
       SANDBOX_NAME: "CI-Sandbox"
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pipeline-artifact
 
       - name: Install Veracode CLI
         run: |
@@ -24,7 +73,7 @@
             --sandboxname "$SANDBOX_NAME" \
             --createprofile true \
             --createsandbox true \
-            --filepath pipeline-artifact.zip \
+            --filepath veracode-artifact.zip \
             --version "GitHub-${{ github.run_number }}" \
             --wait true
 
@@ -35,10 +84,10 @@
             --appname "$APP_NAME" \
             --sandboxname "$SANDBOX_NAME" \
             --format pdf \
-            --output reports/Veracode-Scan.pdf
+            --output reports/Veracode-Sandbox-Scan.pdf
 
       - name: Upload PDF Report
         uses: actions/upload-artifact@v4
         with:
           name: Veracode-PDF-Report
-          path: reports/Veracode-Scan.pdf
+          path: reports/Veracode-Sandbox-Scan.pdf
