@@ -1,4 +1,4 @@
-name: Veracode SAST
+name: Veracode SAST Update
 
 on:
   push:
