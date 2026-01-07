@@ -21,7 +21,25 @@ jobs:
       - name: Install Veracode CLI
         run: |
           curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-          echo "$HOME/.veracode/bin" >> $GITHUB_PATH
+
+          # Try all known install locations
+          if [ -x "$HOME/.veracode/bin/veracode" ]; then
+            echo "$HOME/.veracode/bin" >> $GITHUB_PATH
+          elif [ -x "/usr/local/bin/veracode" ]; then
+            echo "/usr/local/bin" >> $GITHUB_PATH
+          elif [ -x "$HOME/bin/veracode" ]; then
+            echo "$HOME/bin" >> $GITHUB_PATH
+          else
+            echo "❌ Veracode CLI not found after install"
+            find $HOME -name veracode || true
+            exit 1
+          fi
+
+      - name: Verify Veracode CLI
+        run: |
+           which veracode || true
+           veracode --version
+
 
       - name: Package application
         run: |
