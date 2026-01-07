@@ -8,38 +8,29 @@ jobs:
   veracode-cli-scan:
     runs-on: ubuntu-latest
     steps:
-      # 1. Pull the latest code from your repo
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Download and install the Veracode CLI binary
       - name: Install Veracode CLI
         run: |
           curl -fsS https://tools.veracode.com/veracode-cli/install | sh
           sudo mv ./veracode /usr/local/bin/
 
-      # 3. Execute the scan using your stored secrets
       - name: Run SAST Scan
         env:
           VERACODE_API_KEY_ID: ${{ secrets.VERACODE_API_ID }}
           VERACODE_API_KEY_SECRET: ${{ secrets.VERACODE_API_SECRET }}
         run: |
-          # Zip the current directory (excluding hidden git files)
           zip -r project.zip . -x "*.git*"
-          
-          # Run Veracode SAST scan
           veracode static scan project.zip \
             --results-file veracode_results.json \
             --fail-on-severity="Very High, High"
-          
-          # Generate PDF report
           veracode static report project.zip \
             --format pdf \
             --output veracode_report.pdf
 
-      # 4. Upload PDF report as an artifact
       - name: Upload Veracode PDF Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: veracode-report
           path: veracode_report.pdf
