@@ -31,23 +31,9 @@ jobs:
           veracode static scan project.zip \
             --results-file veracode_results.json \
             --fail-on-severity="Very High, High"
-          # 3. Use JQ to convert JSON to CSV
-          # We extract: Module, Severity, CWE, and the Remediation Advice
-          echo "Module,Severity,CWE_ID,Description,Remediation" > veracode_report.csv
-          jq -r '.findings[] | [
-            .files.source_file.file, 
-            .severity, 
-            .cwe_id, 
-            (.display_text | gsub("\n"; " ") | gsub(","; ";")), 
-            (.remediation_status // "Consult Veracode Platform for fix" | gsub("\n"; " ") | gsub(","; ";"))
-          ] | @csv' veracode_results.json >> veracode_report.csv
           
       # 4. Upload CSV as a GitHub Artifact
       - name: Upload CSV Report
         uses: actions/upload-artifact@v4
-        with:
-          name: veracode-csv-report
-          path: veracode_report.csv
-        with:
           name: veracode-report
           path: veracode_results.json
