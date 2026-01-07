@@ -24,7 +24,11 @@ jobs:
           VERACODE_API_KEY_ID: ${{ secrets.VERACODE_API_ID }}
           VERACODE_API_KEY_SECRET: ${{ secrets.VERACODE_API_SECRET }}
         run: |
-          veracode static scan . \
+          # 1. Zip the current directory (excluding hidden git files)
+          zip -r project.zip . -x "*.git*"
+          
+          # 2. Point the CLI to the zip file instead of the directory "."
+          veracode static scan project.zip \
             --results-file veracode_results.json \
             --fail-on-severity="Very High, High"
 
