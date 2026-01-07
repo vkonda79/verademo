@@ -32,8 +32,3 @@ jobs:
             --results-file veracode_results.json \
             --fail-on-severity="Very High, High"
           
-      # 4. Upload CSV as a GitHub Artifact
-      - name: Upload CSV Report
-        uses: actions/upload-artifact@v4
-          name: veracode-report
-          path: veracode_results.json
