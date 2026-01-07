@@ -36,6 +36,8 @@ jobs:
           veracode package \
             --source . \
             --output veracode-artifact.zip
+            --trust
+
 
       - name: Run Pipeline Scan
         run: |
