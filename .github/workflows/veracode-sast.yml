@@ -1,4 +1,4 @@
-name: Veracode SAST – Pipeline + PDF
+name: Veracode SAST – Upload & PDF
 
 on:
   push:
@@ -7,56 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  pipeline-scan:
-    runs-on: ubuntu-latest
-
-    env:
-      VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-      VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
-
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Install Veracode CLI
-        run: |
-          curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-
-          # Add repo workspace to PATH (where veracode is installed)
-          echo "$GITHUB_WORKSPACE" >> $GITHUB_PATH
-
-      - name: Confirm Veracode CLI
-        run: |
-          which veracode
-          veracode package --help | grep -E "trust|yes"
-
-      - name: Package application
-        run: |
-          set -e
-          veracode package \
-            --source "$GITHUB_WORKSPACE" \
-            --output veracode-artifact.zip \
-            --trust \
-            --verbose
-
-      - name: Run Pipeline Scan
-        run: |
-          veracode pipeline scan \
-            --file veracode-artifact.zip \
-            --fail-on-severity High \
-            --json_output pipeline-results.json
-
-      - name: Upload Pipeline Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: pipeline-artifact
-          path: |
-            veracode-artifact.zip
-            pipeline-results.json
-
-  pdf-report:
-    name: Sandbox Upload & PDF Report
-    needs: pipeline-scan
+  package-and-scan:
     runs-on: ubuntu-latest
 
     env:
@@ -66,16 +17,31 @@ jobs:
       SANDBOX_NAME: "CI-Sandbox"
 
     steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: pipeline-artifact
+      # 1️⃣ Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      # 2️⃣ Install Veracode CLI
       - name: Install Veracode CLI
         run: |
           curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-          echo "$HOME/.veracode/bin" >> $GITHUB_PATH
+          echo "$GITHUB_WORKSPACE" >> $GITHUB_PATH
 
+      - name: Verify Veracode CLI
+        run: |
+          which veracode
+          veracode --version
+
+      # 3️⃣ Package the application (non-interactive)
+      - name: Package application
+        run: |
+          veracode package \
+            --source "$GITHUB_WORKSPACE" \
+            --output veracode-artifact.zip \
+            --trust \
+            --verbose
+
+      # 4️⃣ Upload and Scan to Sandbox
       - name: Upload & Scan (Sandbox)
         run: |
           veracode uploadandscan \
@@ -87,6 +53,7 @@ jobs:
             --version "GitHub-${{ github.run_number }}" \
             --wait true
 
+      # 5️⃣ Generate PDF report
       - name: Generate PDF Report
         run: |
           mkdir -p reports
@@ -96,8 +63,11 @@ jobs:
             --format pdf \
             --output reports/Veracode-Sandbox-Scan.pdf
 
-      - name: Upload PDF Report
+      # 6️⃣ Upload artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Veracode-PDF-Report
-          path: reports/Veracode-Sandbox-Scan.pdf
+          name: veracode-artifacts
+          path: |
+            veracode-artifact.zip
+            reports/Veracode-Sandbox-Scan.pdf
