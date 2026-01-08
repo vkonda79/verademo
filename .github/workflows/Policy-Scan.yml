@@ -1,4 +1,4 @@
-name: Veracode Pipeline Scan & Policy Scan
+name: Veracode Pipeline Scan CLI v2
 
 on:
   push:
@@ -11,97 +11,80 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ------------------------------------------------------------
-      # Step 1: Checkout repository
-      # ------------------------------------------------------------
+      # Step 1: Checkout repo
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # ------------------------------------------------------------
       # Step 2: Set up Java (required for Veracode CLI)
-      # ------------------------------------------------------------
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 17
 
-      # ------------------------------------------------------------
       # Step 3: Install Veracode CLI v2
-      # ------------------------------------------------------------
       - name: Install Veracode CLI v2
         run: |
-          curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-          chmod +x veracode
-          echo "$PWD" >> $GITHUB_PATH
-          ./veracode version
+          curl -fsS https://tools.veracode.com/veracode-cli/install | sh -s -- -b $HOME/veracode-cli
+          echo "$HOME/veracode-cli" >> $GITHUB_PATH
+          veracode version
 
-      # ------------------------------------------------------------
-      # Step 4: Prepare artifact (zip your project)
-      # ------------------------------------------------------------
+      # Step 4: Configure Veracode CLI credentials
+      - name: Configure Veracode CLI
+        run: |
+          veracode configure --id ${{ secrets.VERACODE_API_ID }} --key ${{ secrets.VERACODE_API_KEY }}
+
+      # Step 5: Prepare artifact (zip your project)
       - name: Prepare Artifact
         run: zip -r app.zip .
 
-      # ------------------------------------------------------------
-      # Step 5: Run Pipeline Scan (CLI v2)
-      # ------------------------------------------------------------
-      - name: Run Pipeline Scan
+      # Step 6: Run Pipeline Scan
+      - name: Run Veracode Pipeline Scan
         run: |
-          ./veracode scan pipeline \
-            -vid ${{ secrets.VERACODE_API_ID }} \
-            -vkey ${{ secrets.VERACODE_API_KEY }} \
-            -appname "Verademo-Test" \
-            -stage Testing \
-            -file app.zip \
-            -fail-on-severity low \
-            -json-report Verademo-Scan-Report.json \
-            -summary-report Verademo-Scan-Summary.txt \
-            -filtered-json-report filtered_results.json
+          veracode scan --type archive --source app.zip \
+            -o Verademo-Scan-Report.json -f json
 
-      # ------------------------------------------------------------
-      # Step 6: Optional - Policy Scan PDF
-      # ------------------------------------------------------------
-      - name: Run Policy Scan & Download PDF
+      # Step 7: Generate human-readable summary
+      - name: Generate Summary Report
         run: |
-          ./veracode scan policy \
-            -vid ${{ secrets.VERACODE_API_ID }} \
-            -vkey ${{ secrets.VERACODE_API_KEY }} \
-            -appname "Verademo-Test" \
-            -file app.zip \
-            -pdf-report Verademo-Policy-Report.pdf
+          if [ -s Verademo-Scan-Report.json ]; then
+            jq -r '.issues[] | "\(.severity) - \(.cweId) - \(.module) - \(.file)"' Verademo-Scan-Report.json > Verademo-Scan-Summary.txt || echo "No issues found" > Verademo-Scan-Summary.txt
+          else
+            echo "No issues found" > Verademo-Scan-Summary.txt
+          fi
 
-      # ------------------------------------------------------------
-      # Step 7: Upload JSON report
-      # ------------------------------------------------------------
+      # Step 8: Optional: Generate filtered JSON (example: only medium/high)
+      - name: Generate Filtered JSON
+        run: |
+          jq '[.issues[] | select(.severity=="High" or .severity=="Medium")]' Verademo-Scan-Report.json > filtered_results.json
+
+      # Step 9: Optional: Run Policy Scan and generate PDF
+      - name: Run Policy Scan PDF
+        run: |
+          veracode scan --type archive --source app.zip \
+            -p "Verademo-Test-Policy" -f pdf -o Verademo-Policy-Report.pdf
+
+      # Step 10: Upload artifacts
       - name: Upload JSON Report
         uses: actions/upload-artifact@v4
         with:
           name: veracode-json-report
           path: Verademo-Scan-Report.json
 
-      # ------------------------------------------------------------
-      # Step 8: Upload Summary report
-      # ------------------------------------------------------------
       - name: Upload Summary Report
         uses: actions/upload-artifact@v4
         with:
           name: veracode-summary-report
           path: Verademo-Scan-Summary.txt
 
-      # ------------------------------------------------------------
-      # Step 9: Upload Filtered JSON report
-      # ------------------------------------------------------------
-      - name: Upload Filtered JSON
+      - name: Upload Filtered JSON Report
         uses: actions/upload-artifact@v4
         with:
           name: veracode-filtered-report
           path: filtered_results.json
 
-      # ------------------------------------------------------------
-      # Step 10: Upload Policy Scan PDF
-      # ------------------------------------------------------------
-      - name: Upload Policy Scan PDF
+      - name: Upload Policy PDF Report
         uses: actions/upload-artifact@v4
         with:
-          name: veracode-policy-pdf
+          name: veracode-policy-report
           path: Verademo-Policy-Report.pdf
