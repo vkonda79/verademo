@@ -46,17 +46,17 @@ jobs:
             filtered_results.json
             summary.txt
 
-      - name: Download Veracode Java API Wrapper
+  # 6️⃣ Add your VeracodeJavaAPI.jar to the repo (e.g., in /tools)
+      - name: Check VeracodeJavaAPI.jar
         run: |
-          curl -L -f -o VeracodeJavaAPI.jar \
-            https://github.com/veracode/veracode-java-api-wrapper/releases/latest/download/VeracodeJavaAPI.jar
-          ls -lh VeracodeJavaAPI.jar
-          file VeracodeJavaAPI.jar
+          ls -lh tools/VeracodeJavaAPI.jar
+          file tools/VeracodeJavaAPI.jar
 
-      - name: Generate Veracode PDF report
+      # 7️⃣ Generate PDF report using VeracodeJavaAPI.jar
+      - name: Generate PDF report
         run: |
-          java -jar VeracodeJavaAPI.jar \
-            -vid "${{ secrets.VERACODE_API_ID }}" \
+          java -jar tools/VeracodeJavaAPI.jar \            
+          -vid "${{ secrets.VERACODE_API_ID }}" \
             -vkey "${{ secrets.VERACODE_API_KEY }}" \
             -action getreport \
             -appid "${{ secrets.VERACODE_API_ID_VAL }}" \
