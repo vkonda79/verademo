@@ -35,10 +35,10 @@ jobs:
           unzip -o pipeline-scan.zip -d veracode-pipeline
       
           # Download Veracode Java API Wrapper (Policy Scan / PDF)
-          curl -fL https://repo1.maven.org/maven2/com/veracode/api/wrappers/veracode-java-api-wrapper/23.8.5.0/veracode-java-api-wrapper-23.8.5.0.jar \
+          curl -fL https://repo1.maven.org/maven2/com/veracode/api/wrappers/veracode-java-api-wrapper/24.10.0.0/veracode-java-api-wrapper-24.10.0.0.jar \
             -o VeracodeJavaAPI.jar
       
-          # Validate JAR (prevents "invalid or corrupt jarfile")
+          # Validate JAR
           file VeracodeJavaAPI.jar
           jar tf VeracodeJavaAPI.jar | head
 
