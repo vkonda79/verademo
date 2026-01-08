@@ -48,9 +48,10 @@ jobs:
 
       - name: Download Veracode Java API Wrapper
         run: |
-          curl -L -o VeracodeJavaAPI.jar \
-            https://repo1.maven.org/maven2/com/veracode/vosp/api/wrappers/vosp-api-wrappers-java/24.9.2.0/vosp-api-wrappers-java-24.9.2.0.jar
+          curl -L -f -o VeracodeJavaAPI.jar \
+            https://github.com/veracode/veracode-java-api-wrapper/releases/latest/download/VeracodeJavaAPI.jar
           ls -lh VeracodeJavaAPI.jar
+          file VeracodeJavaAPI.jar
 
       - name: Generate Veracode PDF report
         run: |
@@ -63,3 +64,8 @@ jobs:
             -format pdf \
             -outputfilepath veracode_scan_report.pdf
 
+      - name: Upload PDF report
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode_pdf_report
+          path: veracode_scan_report.pdf
