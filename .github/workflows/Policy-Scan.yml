@@ -9,60 +9,26 @@ jobs:
   veracode-scan:
     runs-on: ubuntu-latest
     steps:
-            
-      # Checkout the repo
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      # Zip the repo for scanning
-      - name: Zip repository
+      # 6️⃣ Download classic Veracode CLI for PDF report
+      - name: Download Veracode CLI (classic)
         run: |
-          zip -r artifact.zip . -x "*.git*" "*.github*"
+          curl -fsS -L https://downloads.veracode.com/securityscan/veracode.jar -o veracode.jar
+          chmod +x veracode.jar
 
-      # Download and unzip the Veracode Pipeline Scan CLI
-      - name: Download Pipeline Scan CLI
-        run: |
-          curl -L -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
-          unzip pipeline-scan-LATEST.zip -d veracode-pipeline-cli
-
-      # Run Pipeline Scan (JSON results)
-      - name: Run Pipeline Scan
-        run: |
-          java -jar veracode-pipeline-cli/pipeline-scan.jar \
-            -f artifact.zip \
-            -vid "${{ secrets.VERACODE_API_ID }}" \
-            -vkey "${{ secrets.VERACODE_API_KEY }}" \
-            -sf summary.txt \
-            -jf results.json \
-            -fjf filtered_results.json || true
-
-      # Upload JSON and summary artifacts
-      - name: Upload JSON and summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: veracode_scan_results
-          path: |
-            results.json
-            filtered_results.json
-            summary.txt
-
-  # 6️⃣ Add your VeracodeJavaAPI.jar to the repo (e.g., in /tools)
-      - name: Check VeracodeJavaAPI.jar
-        run: |
-          ls -lh tools/VeracodeJavaAPI.jar
-          file tools/VeracodeJavaAPI.jar
-
+      # 7️⃣ Generate PDF report
       - name: Generate PDF report
         run: |
-          java -jar tools/VeracodeJavaAPI.jar \
-              -action getreport \
-              -vid "${{ secrets.VERACODE_API_ID }}" \
-              -vkey "${{ secrets.VERACODE_API_KEY }}" \
-              -appid "${{ secrets.VERACODE_API_ID_VAL }}" \
-              -sandboxname "${{ secrets.SANDBOX_NAME }}" \
-              -format pdf \
-              -outputfilepath veracode_scan_report.pdf
+          java -jar veracode.jar \
+            -appid "${{ secrets.VERACODE_API_ID_VAL }}" \
+            -sandboxname "${{ secrets.SANDBOX_NAME }}" \
+            -action getreport \
+            -reportformat pdf \
+            -reportname veracode_scan_report.pdf \
+            -vid "${{ secrets.VERACODE_API_ID }}" \
+            -vkey "${{ secrets.VERACODE_API_KEY }}"
 
+      # 8️⃣ Upload PDF artifact
       - name: Upload PDF report
         uses: actions/upload-artifact@v4
         with:
