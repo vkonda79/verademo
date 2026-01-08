@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repo
+      # Step 1: Checkout repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
@@ -22,8 +22,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # Step 3: Install Veracode CLI
-      - name: Install Veracode Pipeline Scan CLI
+      # Step 3: Install Veracode Pipeline Scan CLI
+      - name: Install Veracode CLI
         run: |
           curl -L https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
           unzip pipeline-scan.zip -d veracode-cli
@@ -32,7 +32,7 @@ jobs:
       - name: Prepare Artifact
         run: zip -r app.zip .
 
-     # Step 5: Run Veracode scan (fail only on high severity)
+      # Step 5: Run Veracode Pipeline Scan
       - name: Run Veracode Pipeline Scan
         run: |
           java -jar veracode-cli/pipeline-scan.jar \
@@ -41,9 +41,9 @@ jobs:
             -p "Verademo-Test" \
             -ds Testing \
             -f app.zip \
-            -sf ${{ github.workspace }}/Verademo-Scan-Summary.txt \
-            -jf ${{ github.workspace }}/Verademo-Scan-Report.json \
-            -fjf ${{ github.workspace }}/filtered_results.json \
+            -sf Verademo-Scan-Summary.txt \
+            -jf Verademo-Scan-Report.json \
+            -fjf filtered_results.json \
             -fs high
 
       # Step 6: Upload JSON report
@@ -52,12 +52,17 @@ jobs:
         with:
           name: veracode-json-report
           path: Verademo-Scan-Report.json
-          
 
-     # Step 7: Upload Summary report
+      # Step 7: Upload Summary report
       - name: Upload Summary Report
         uses: actions/upload-artifact@v4
         with:
           name: veracode-summary-report
-          path: ${{ github.workspace }}/Verademo-Scan-Summary.txt
+          path: Verademo-Scan-Summary.txt
 
+      # Step 8: Upload Filtered JSON report (always generated)
+      - name: Upload Filtered JSON Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode-filtered-report
+          path: filtered_results.json
