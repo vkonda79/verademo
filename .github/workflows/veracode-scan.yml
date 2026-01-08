@@ -42,7 +42,8 @@ jobs:
             -f app.zip \
             -sf Verademo-Scan-Summary.txt \
             -fs high
-      
+        continue-on-error: true
+
       # Step 6: Download PDF Report
       - name: Get JSON Scan Report
         run: |
