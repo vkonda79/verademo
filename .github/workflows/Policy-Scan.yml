@@ -10,23 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      # 6️⃣ Download classic Veracode CLI for PDF report
-      - name: Download Veracode CLI (classic)
-        run: |
-          curl -fsS -L https://downloads.veracode.com/securityscan/veracode.jar -o veracode.jar
-          chmod +x veracode.jar
-
       # 7️⃣ Generate PDF report
       - name: Generate PDF report
         run: |
-          java -jar veracode.jar \
+          java -jar tools/VeracodeJavaAPI.jar \
+            -vid "${{ secrets.VERACODE_API_ID }}" \
+            -vkey "${{ secrets.VERACODE_API_KEY }}" \
+            -action getreport \
             -appid "${{ secrets.VERACODE_API_ID_VAL }}" \
             -sandboxname "${{ secrets.SANDBOX_NAME }}" \
-            -action getreport \
-            -reportformat pdf \
-            -reportname veracode_scan_report.pdf \
-            -vid "${{ secrets.VERACODE_API_ID }}" \
-            -vkey "${{ secrets.VERACODE_API_KEY }}"
+            -format pdf \
+            -outputfilepath veracode_scan_report.pdf
 
       # 8️⃣ Upload PDF artifact
       - name: Upload PDF report
