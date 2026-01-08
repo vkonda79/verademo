@@ -29,15 +29,11 @@ jobs:
       - name: Run Veracode pipeline scan
         uses: veracode/Veracode-pipeline-scan-action@v1.0.12
         with:
-              vid: ${{ secrets.VERACODE_API_ID }}
-              vkey: ${{ secrets.VERACODE_API_KEY }}
-              file: "artifact.zip"          # Must be a valid file
-              app_name: ${{ secrets.APP_NAME }}
-              sandbox_name: ${{ secrets.SANDBOX_NAME }}
-              create_profile: false
-              version: ${{ github.sha }}
-              wait_for_scan: true
-              artifact_name: veracode_scan_results   
+          vid: ${{ secrets.VERACODE_API_ID }}
+          vkey: ${{ secrets.VERACODE_API_KEY }}
+          file: artifact.zip
+          json_output_file: results.json
+          summary_output_file: summary.txt
 
 
       # Download Veracode CLI
