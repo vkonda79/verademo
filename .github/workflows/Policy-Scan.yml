@@ -23,7 +23,6 @@ jobs:
           # Use ./ because the logs show it was installed in the workspace
           ./veracode static scan . \
             --results-file results.json \
-            --wait
         env:
           VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
           VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
