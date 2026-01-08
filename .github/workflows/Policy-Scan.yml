@@ -27,20 +27,22 @@ jobs:
 
       - name: Download Veracode CLI
         run: |
-          curl -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
+          curl -L -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
           unzip pipeline-scan-LATEST.zip -d veracode-cli
-          ls veracode-cli
-          # veracode.jar  other files...
-
-          #chmod +x veracode-cli.jar
       
-      - name: Run Veracode CLI to get PDF
+      - name: Generate PDF report
         run: |
           java -jar veracode-cli/pipeline-scan.jar \
-            -appid "${{ secrets.APP_NAME }}" \
-            -sandboxname "${{ secrets.SANDBOX_NAME }}" \
-            -action getreport \
-            -reportformat pdf \
-            -reportname veracode_scan_report.pdf \
-            -vid "${{ secrets.VERACODE_API_ID }}" \
-            -vkey "${{ secrets.VERACODE_API_KEY }}"
+            --app_id "${{ secrets.APP_NAME }}" \
+            --sandbox_name "${{ secrets.SANDBOX_NAME }}" \
+            --action getreport \
+            --reportformat pdf \
+            --reportname veracode_scan_report.pdf \
+            --vid "${{ secrets.VERACODE_API_ID }}" \
+            --vkey "${{ secrets.VERACODE_API_KEY }}"
+      
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode_pdf_report
+          path: veracode-cli/veracode_scan_report.pdf
