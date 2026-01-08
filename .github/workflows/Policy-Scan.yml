@@ -20,8 +20,8 @@ jobs:
 
       - name: Veracode Static Analysis (SAST)
         run: |
-          # This command packages and scans the current directory
-          veracode static scan . \
+          # Use the absolute path to the binary installed in the previous step
+          $HOME/veracode-cli/veracode static scan . \
             --results-file results.json \
             --wait
         env:
