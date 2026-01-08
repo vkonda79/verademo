@@ -38,12 +38,10 @@ jobs:
     # ------------------------------------------------------------
     # Install Veracode CLI v2
     # ------------------------------------------------------------
-    - name: Install Veracode CLI
+    - name: Install Veracode CLI (global)
       run: |
-        curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-        echo "$PWD" >> $GITHUB_PATH
+        curl -fsS https://tools.veracode.com/veracode-cli/install | sh -s -- -b /usr/local/bin
         veracode version
-
 
     # ------------------------------------------------------------
     # PIPELINE SCAN (FAST, NO POLICY GATE)
