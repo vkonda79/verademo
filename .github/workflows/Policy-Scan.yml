@@ -1,4 +1,4 @@
-name: Veracode Scan
+name: Veracode Scan with PDF Report
 
 on:
   push:
@@ -11,41 +11,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 3.1: Checkout code
-      - name: Checkout code
+      # Step 1: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 3.2: Set up Java
+      # Step 2: Set up Java
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 17
 
-      # Step 3.3: Download Veracode CLI
+      # Step 3: Download and verify Veracode CLI
       - name: Download Veracode CLI
         run: |
+          echo "Removing old JAR if exists..."
           rm -f veracode.jar
+          
+          echo "Downloading latest Veracode CLI..."
           curl -L -o veracode.jar https://downloads.veracode.com/securityscan/pipeline/veracode-cli-LATEST-all.jar
+          
+          echo "Verifying download..."
           ls -lh veracode.jar
           file veracode.jar
+          
+          if ! file veracode.jar | grep -q "Java archive data"; then
+            echo "ERROR: veracode.jar is invalid or corrupted!"
+            exit 1
+          fi
 
-
-      # Step 3.4: Run Veracode scan
-      - name: Run Veracode Scan
+      # Step 4: Run upload and scan (waits for completion)
+      - name: Upload and scan
         run: |
           java -jar veracode.jar \
             -appid "${{ secrets.APP_NAME }}" \
             -sandboxname "${{ secrets.SANDBOX_NAME }}" \
             -action uploadandscan \
             -createprofile false \
-            -version "1.0.0" \
+            -version "${{ github.sha }}" \
             -auto \
+            -waitforresults true \
             -filepath "./" \
             -vid "${{ secrets.VERACODE_API_ID }}" \
             -vkey "${{ secrets.VERACODE_API_KEY }}"
 
-      # Step 3.5: Download PDF report
+      # Step 5: Download PDF report
       - name: Download PDF report
         run: |
           java -jar veracode.jar \
@@ -53,13 +63,13 @@ jobs:
             -sandboxname "${{ secrets.SANDBOX_NAME }}" \
             -action getreport \
             -reportformat pdf \
+            -reportname "veracode_scan_report.pdf" \
             -vid "${{ secrets.VERACODE_API_ID }}" \
-            -vkey "${{ secrets.VERACODE_API_KEY }}" \
-            -reportname "veracode_scan_report.pdf"
+            -vkey "${{ secrets.VERACODE_API_KEY }}"
 
-      # Step 3.6: Upload PDF as artifact
+      # Step 6: Upload PDF as GitHub artifact
       - name: Upload PDF as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: veracode-pdf-report
           path: veracode_scan_report.pdf
