@@ -46,31 +46,8 @@ jobs:
             filtered_results.json
             summary.txt
 
-      # Download classic Veracode CLI for PDF report
-      - name: Download Veracode CLI
+      - name: Download Veracode Java API Wrapper
         run: |
-            curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-            #chmod +x veracode-cli.jar
-            # check file
-            ls *.jar
-            file veracode-cli.jar
-            
-
-      # Generate PDF report
-      - name: Generate PDF report
-        run: |
-          java -jar veracode-cli.jar \
-            -appid "${{ secrets.APP_NAME }}" \
-            -sandboxname "${{ secrets.SANDBOX_NAME }}" \
-            -action getreport \
-            -reportformat pdf \
-            -reportname veracode_scan_report.pdf \
-            -vid "${{ secrets.VERACODE_API_ID }}" \
-            -vkey "${{ secrets.VERACODE_API_KEY }}"
-
-      # Upload PDF artifact
-      - name: Upload PDF report
-        uses: actions/upload-artifact@v4
-        with:
-          name: veracode_pdf_report
-          path: veracode_scan_report.pdf
+          curl -L -o VeracodeJavaAPI.jar \
+            https://repo1.maven.org/maven2/com/veracode/vosp/api/wrappers/vosp-api-wrappers-java/24.9.2.0/vosp-api-wrappers-java-24.9.2.0.jar
+          ls -lh VeracodeJavaAPI.jar
