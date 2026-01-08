@@ -26,35 +26,32 @@ jobs:
         run: |
           curl -L https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
           unzip pipeline-scan.zip -d veracode-cli
-          chmod +x veracode-cli/pipeline-scan
-
+          
       # Step 4: Package your application (zip all files)
       - name: Prepare Artifact
         run: zip -r app.zip .
 
-      # Step 5: Run Veracode Scan
+      # Step 5: Run Veracode Pipeline Scan
       - name: Run Veracode Pipeline Scan
         run: |
-          veracode-cli/pipeline-scan \
+          java -jar veracode-cli/pipeline-scan/pipeline-scan.jar \
             -vid ${{ secrets.VERACODE_API_ID }} \
             -vkey ${{ secrets.VERACODE_API_KEY }} \
             -appname "Verademo-Test" \
             -sandboxname "CI-Sandbox" \
             -createprofile true \
-            -filepath "app.zip" \
-            -vid ${{ secrets.VERACODE_API_ID }} \
-            -vkey ${{ secrets.VERACODE_API_KEY }}
-
-      # Step 6: Download Scan PDF Report
+            -filepath "app.zip"
+      
+      # Step 6: Download PDF Report
       - name: Get Scan PDF Report
         run: |
-          veracode-cli/pipeline-scan \
+          java -jar veracode-cli/pipeline-scan/pipeline-scan.jar \
             -vid ${{ secrets.VERACODE_API_ID }} \
             -vkey ${{ secrets.VERACODE_API_KEY }} \
             -appname "Verademo-Test" \
             -sandboxname "CI-Sandbox" \
             -downloadpdf "Verademo-Scan-Report.pdf"
-
+            
       # Step 7: Upload PDF as Artifact in GitHub
       - name: Upload PDF Report
         uses: actions/upload-artifact@v4
