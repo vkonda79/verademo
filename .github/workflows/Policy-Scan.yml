@@ -1,4 +1,4 @@
-name: Veracode Scan with PDF Report
+name: Veracode Pipeline Scan
 
 on:
   push:
@@ -7,38 +7,52 @@ on:
   workflow_dispatch:
 
 jobs:
-  veracode-scan:
+  build-and-scan:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repository
-      - name: Checkout repository
+      # 1) Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      # Step 2: Run Veracode Scan via official action
-      - name: Run Veracode Scan
-        uses: veracode/veracode-scan-action@v1
+      # 2) (Optional) Build your artifact
+      # Uncomment and update if your project needs building
+      # - name: Build app
+      #   run: |
+      #     mvn -B package --file pom.xml
+      #   # or your build command
+
+      # 3) Run Veracode Pipeline Scan
+      - name: Run Veracode pipeline scan
+        uses: veracode/Veracode-pipeline-scan-action@v1.0.12
+        id: pipeline-scan
         with:
           vid: ${{ secrets.VERACODE_API_ID }}
           vkey: ${{ secrets.VERACODE_API_KEY }}
-          app_name: ${{ secrets.APP_NAME }}
-          sandbox_name: ${{ secrets.SANDBOX_NAME }}
-          create_profile: false
-          version: ${{ github.sha }}
-          wait_for_scan: true
-          scan_file: "./"   # path to the code or ZIP
+          file: "./"                 # path to output artifact or source
+          # Optional:
+          # veracode_policy_name: "MyPolicy"
+          # fail_on_severity: "Very High, High"
 
-      # Step 3: Download PDF report
+      # Download Veracode CLI
+      - name: Download Veracode CLI
+        run: |
+          curl -L -o veracode-cli.jar https://downloads.veracode.com/securityscan/pipeline/veracode-cli-LATEST-all.jar
+
+      # Get PDF detailed report
       - name: Download PDF report
         run: |
-          curl -u "${{ secrets.VERACODE_API_ID }}:${{ secrets.VERACODE_API_KEY }}" \
-               -X GET \
-               "https://analysiscenter.veracode.com/api/5.0/detailedreport.do?app_id=$(veracode-cli get-app-id --app_name ${{ secrets.APP_NAME }})&sandbox_name=${{ secrets.SANDBOX_NAME }}&report_format=pdf" \
-               -o veracode_scan_report.pdf || echo "PDF download may require CLI; see note below."
+          java -jar veracode-cli.jar \
+            -appid "${{ secrets.APP_NAME }}" \
+            -sandboxname "${{ secrets.SANDBOX_NAME }}" \
+            -action getreport \
+            -reportformat pdf \
+            -reportname "veracode_scan_report.pdf" \
+            -vid "${{ secrets.VERACODE_API_ID }}" \
+            -vkey "${{ secrets.VERACODE_API_KEY }}"
 
-      # Step 4: Upload PDF as artifact
-      - name: Upload PDF report
+      - name: Upload PDF
         uses: actions/upload-artifact@v4
         with:
-          name: veracode-pdf-report
+          name: veracode_pdf_report
           path: veracode_scan_report.pdf
