@@ -33,8 +33,12 @@ jobs:
         run: |
           curl -fsS https://tools.veracode.com/veracode-cli/install | sh
           chmod +x veracode
-          echo "$PWD" >> $GITHUB_PATH
-          veracode version
+       
+      - name: Run Veracode version
+        run: |
+          ./veracode version
+   
+          
 
       # ------------------------------------------------------------
       # Step 4: Prepare artifact (zip your project)
