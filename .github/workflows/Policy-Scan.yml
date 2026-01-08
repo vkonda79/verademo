@@ -1,48 +1,71 @@
-name: Veracode Pipeline Scan
+name: Veracode Scan Pipeline
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [main]
+  pull_request:
 
 jobs:
-  build-and-scan:
+  veracode-scan:
     runs-on: ubuntu-latest
-
     steps:
-      # 1) Checkout code
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      # Checkout the repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # 2) (Optional) Build your artifact
-      # Uncomment and update if your project needs building
-      # - name: Build app
-      #   run: |
-      #     mvn -B package --file pom.xml
-      #   # or your build command
+      # Zip the repo for scanning
+      - name: Zip repository
+        run: |
+          zip -r artifact.zip . -x "*.git*" "*.github*"
 
-      - name: Package code
-        run: zip -r artifact.zip . -x "*.git*"
-
-      - name: Download Veracode CLI
+      # Download and unzip the Veracode Pipeline Scan CLI
+      - name: Download Pipeline Scan CLI
         run: |
           curl -L -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
-          unzip pipeline-scan-LATEST.zip -d veracode-cli
-      
+          unzip pipeline-scan-LATEST.zip -d veracode-pipeline-cli
+
+      # Run Pipeline Scan (JSON results)
+      - name: Run Pipeline Scan
+        run: |
+          java -jar veracode-pipeline-cli/pipeline-scan.jar \
+            -f artifact.zip \
+            -vid "${{ secrets.VERACODE_API_ID }}" \
+            -vkey "${{ secrets.VERACODE_API_KEY }}" \
+            -sf summary.txt \
+            -jf results.json \
+            -fjf filtered_results.json
+
+      # Upload JSON and summary artifacts
+      - name: Upload JSON and summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode_scan_results
+          path: |
+            results.json
+            filtered_results.json
+            summary.txt
+
+      # Download classic Veracode CLI for PDF report
+      - name: Download Classic Veracode CLI
+        run: |
+          curl -L -o veracode-cli.jar https://downloads.veracode.com/securityscan/pipeline/veracode-cli-LATEST-all.jar
+          chmod +x veracode-cli.jar
+
+      # Generate PDF report
       - name: Generate PDF report
         run: |
-          java -jar veracode-cli/pipeline-scan.jar \
-            --app_id "${{ secrets.APP_NAME }}" \
-            --sandbox_name "${{ secrets.SANDBOX_NAME }}" \
-            --action getreport \
-            --reportformat pdf \
-            --reportname veracode_scan_report.pdf \
-            --vid "${{ secrets.VERACODE_API_ID }}" \
-            --vkey "${{ secrets.VERACODE_API_KEY }}"
-      
-      - name: Upload PDF
+          java -jar veracode-cli.jar \
+            -appid "${{ secrets.APP_NAME }}" \
+            -sandboxname "${{ secrets.SANDBOX_NAME }}" \
+            -action getreport \
+            -reportformat pdf \
+            -reportname veracode_scan_report.pdf \
+            -vid "${{ secrets.VERACODE_API_ID }}" \
+            -vkey "${{ secrets.VERACODE_API_KEY }}"
+
+      # Upload PDF artifact
+      - name: Upload PDF report
         uses: actions/upload-artifact@v4
         with:
           name: veracode_pdf_report
-          path: veracode-cli/veracode_scan_report.pdf
+          path: veracode_scan_report.pdf
