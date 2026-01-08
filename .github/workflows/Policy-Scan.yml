@@ -9,15 +9,6 @@ jobs:
   veracode-scan:
     runs-on: ubuntu-latest
     steps:
-
-      - name: Download Veracode CLI
-        run: |
-            curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-            #chmod +x veracode-cli.jar
-            # check file
-            ls *.jar
-            file veracode-cli.jar
-            
             
       # Checkout the repo
       - name: Checkout repository
@@ -56,10 +47,14 @@ jobs:
             summary.txt
 
       # Download classic Veracode CLI for PDF report
-      - name: Download Classic Veracode CLI
+      - name: Download Veracode CLI
         run: |
-          curl -L -o veracode-cli.jar https://downloads.veracode.com/securityscan/pipeline/veracode-cli-LATEST-all.jar
-          chmod +x veracode-cli.jar
+            curl -fsS https://tools.veracode.com/veracode-cli/install | sh
+            #chmod +x veracode-cli.jar
+            # check file
+            ls *.jar
+            file veracode-cli.jar
+            
 
       # Generate PDF report
       - name: Generate PDF report
