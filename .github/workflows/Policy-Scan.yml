@@ -27,7 +27,7 @@ jobs:
 
       - name: Download Veracode CLI
         run: |
-          curl -fsS https://tools.veracode.com/veracode-cli/install | sh
+          curl -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
           chmod +x veracode-cli.jar
       
       - name: Run Veracode CLI to get PDF
