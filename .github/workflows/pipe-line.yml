@@ -1,0 +1,64 @@
+name: Veracode Scan Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  veracode-scan:
+    runs-on: ubuntu-latest
+    steps:
+
+      # 1️⃣ Checkout the repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Zip repository for scanning
+      - name: Zip repository
+        run: |
+          zip -r artifact.zip . -x "*.git*" "*.github*"
+
+      # 3️⃣ Download Pipeline Scan CLI
+      - name: Download Pipeline Scan CLI
+        run: |
+          curl -L -O https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip
+          unzip pipeline-scan-LATEST.zip -d veracode-pipeline-cli
+
+      # 4️⃣ Run Pipeline Scan (JSON results)
+      - name: Run Pipeline Scan
+        run: |
+          java -jar veracode-pipeline-cli/pipeline-scan.jar \
+            -f artifact.zip \
+            -vid "${{ secrets.VERACODE_API_ID }}" \
+            -vkey "${{ secrets.VERACODE_API_KEY }}" \
+            -sf summary.txt \
+            -jf results.json \
+            -fjf filtered_results.json || true
+
+      # 5️⃣ Generate PDF report using Pipeline Scan CLI
+      - name: Generate PDF report
+        run: |
+          java -jar veracode-pipeline-cli/pipeline-scan.jar \
+            -f artifact.zip \
+            -vid "${{ secrets.VERACODE_API_ID }}" \
+            -vkey "${{ secrets.VERACODE_API_KEY }}" \
+            -reportformat pdf \
+            -reportname veracode_scan_report.pdf
+
+      # 6️⃣ Upload JSON & summary artifacts
+      - name: Upload JSON and summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode_scan_results
+          path: |
+            results.json
+            filtered_results.json
+            summary.txt
+
+      # 7️⃣ Upload PDF artifact
+      - name: Upload PDF report
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode_pdf_report
+          path: veracode_scan_report.pdf
