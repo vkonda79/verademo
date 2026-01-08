@@ -57,7 +57,7 @@ jobs:
 
       # Step 7: Upload PDF as Artifact in GitHub
       - name: Upload PDF Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: veracode-scan-report
           path: Verademo-Scan-Report.pdf
