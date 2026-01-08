@@ -50,13 +50,16 @@ jobs:
       - name: Generate summary
         run: |
           if [ -s filtered_results.json ]; then
-          jq -r '(.issues // []) | "\(.severity) - \(.cweId) - \(.module) - \(.file)"' filtered_results.json > Verademo-Scan-Summary.txt
-          if [ ! -s Verademo-Scan-Summary.txt ]; then
-          echo "No issues found" > Verademo-Scan-Summary.txt
-          fi
+            jq -r '.issues // [] | .[] | "\(.severity) - \(.cweId) - \(.module) - \(.fileList // [] | join(","))"' filtered_results.json > Verademo-Scan-Summary.txt
+          
+            if [ ! -s Verademo-Scan-Summary.txt ]; then
+              echo "No issues found" > Verademo-Scan-Summary.txt
+            fi
           else
-          echo "No issues found" > Verademo-Scan-Summary.txt
+            echo "No issues found" > Verademo-Scan-Summary.txt
           fi
+
+
       
       # Upload JSON and summary
       - name: Upload reports
