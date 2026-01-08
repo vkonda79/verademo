@@ -1,4 +1,4 @@
-name: Veracode Scan
+name: Veracode Pipeline Scan
 
 on:
   push:
@@ -9,8 +9,9 @@ on:
 jobs:
   veracode_scan:
     runs-on: ubuntu-latest
+
     steps:
-      # Step 1: Checkout the repo
+      # Step 1: Checkout repo
       - name: Checkout Repository
         uses: actions/checkout@v3
 
@@ -22,16 +23,16 @@ jobs:
           java-version: 17
 
       # Step 3: Install Veracode CLI
-      - name: Install Veracode CLI
+      - name: Install Veracode Pipeline Scan CLI
         run: |
           curl -L https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
           unzip pipeline-scan.zip -d veracode-cli
-          
-      # Step 4: Package your application (zip all files)
+
+      # Step 4: Prepare artifact (zip your project)
       - name: Prepare Artifact
         run: zip -r app.zip .
 
-      # Step 5: Run Veracode Pipeline Scan
+      # Step 5: Run Veracode scan (fail only on high severity)
       - name: Run Veracode Pipeline Scan
         run: |
           java -jar veracode-cli/pipeline-scan.jar \
@@ -41,24 +42,19 @@ jobs:
             -ds Testing \
             -f app.zip \
             -sf Verademo-Scan-Summary.txt \
+            -jf Verademo-Scan-Report.json \
             -fs high
-        continue-on-error: true
 
-      # Step 6: Download PDF Report
-      - name: Get JSON Scan Report
-        run: |
-          java -jar veracode-cli/pipeline-scan.jar \
-            -vid ${{ secrets.VERACODE_API_ID }} \
-            -vkey ${{ secrets.VERACODE_API_KEY }} \
-            -p "Verademo-Test" \
-            -ds Testing \
-            -f app.zip \
-            -jf Verademo-Scan-Report.json
-
-      
-      # Step 7: Upload PDF as Artifact in GitHub
-      - name: Upload PDF Report
+      # Step 6: Upload JSON report
+      - name: Upload JSON Report
         uses: actions/upload-artifact@v4
         with:
-          name: veracode-scan-report
-          path: Verademo-Scan-Report.pdf
+          name: veracode-json-report
+          path: Verademo-Scan-Report.json
+
+      # Step 7: Upload Summary report
+      - name: Upload Summary Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode-summary-report
+          path: Verademo-Scan-Summary.txt
