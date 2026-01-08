@@ -43,6 +43,7 @@ jobs:
             -f app.zip \
             -sf ${{ github.workspace }}/Verademo-Scan-Summary.txt \
             -jf ${{ github.workspace }}/Verademo-Scan-Report.json \
+            -fjf ${{ github.workspace }}/filtered_results.json \
             -fs high
 
       # Step 6: Upload JSON report
