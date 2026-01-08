@@ -44,7 +44,7 @@ jobs:
             -sf Verademo-Scan-Summary.txt \
             #-jf Verademo-Scan-Report.json \
             #-fjf filtered_results.json \
-            #-fs high
+            -fs low
 
       # Step 6: Upload JSON report
       - name: Upload JSON Report
