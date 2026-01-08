@@ -1,125 +1,109 @@
-name: Veracode Security Scan
+name: Veracode Pipeline Scan & Policy Scan
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches:
+      - main
+  pull_request:
 
 jobs:
-  veracode-scan:
+  veracode_scan:
     runs-on: ubuntu-latest
 
-    env:
-      APP_NAME: "Verademo-Test"
-
     steps:
-    # ------------------------------------------------------------
-    # Checkout code
-    # ------------------------------------------------------------
-    - name: Checkout source
-      uses: actions/checkout@v4
+      # ------------------------------------------------------------
+      # Step 1: Checkout repository
+      # ------------------------------------------------------------
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    # ------------------------------------------------------------
-    # Setup Java (required for pipeline scan only)
-    # ------------------------------------------------------------
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: temurin
-        java-version: 17
+      # ------------------------------------------------------------
+      # Step 2: Set up Java (required for Veracode CLI)
+      # ------------------------------------------------------------
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
 
-    # ------------------------------------------------------------
-    # Build application (example)
-    # ------------------------------------------------------------
-    - name: Build application
-      run: |
-        zip -r app.zip . -x ".git/*"
+      # ------------------------------------------------------------
+      # Step 3: Install Veracode CLI v2
+      # ------------------------------------------------------------
+      - name: Install Veracode CLI
+        run: |
+          curl -fsS https://tools.veracode.com/veracode-cli/install | sh
+          chmod +x veracode
+          echo "$PWD" >> $GITHUB_PATH
+          veracode version
 
-    # ------------------------------------------------------------
-    # Install Veracode CLI v2
-    # ------------------------------------------------------------
-    - name: Install Veracode CLI
-      run: |
-        curl -fsS https://tools.veracode.com/veracode-cli/install | sh
-        echo "$PWD" >> $GITHUB_PATH
-      # veracode version
+      # ------------------------------------------------------------
+      # Step 4: Prepare artifact (zip your project)
+      # ------------------------------------------------------------
+      - name: Prepare Artifact
+        run: zip -r app.zip .
 
-    - name: Run Veracode version
-      run: |
-        ./veracode version
+      # ------------------------------------------------------------
+      # Step 5: Run Veracode Pipeline Scan (all severities)
+      # ------------------------------------------------------------
+      - name: Run Pipeline Scan
+        run: |
+          ./veracode pipeline-scan \
+            -vid ${{ secrets.VERACODE_API_ID }} \
+            -vkey ${{ secrets.VERACODE_API_KEY }} \
+            -appname "Verademo-Test" \
+            -stage Testing \
+            -file app.zip \
+            -fail-on-severity low \
+            -json-report Verademo-Scan-Report.json \
+            -summary-report Verademo-Scan-Summary.txt \
+            -filtered-json-report filtered_results.json
 
-    # ------------------------------------------------------------
-    # PIPELINE SCAN (FAST, NO POLICY GATE)
-    # ------------------------------------------------------------
-    - name: Run Veracode Pipeline Scan
-      env:
-        VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-        VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
-      run: |
-        curl -fL https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
-        unzip -o pipeline-scan.zip -d veracode-pipeline
+      # ------------------------------------------------------------
+      # Step 6: Optional - Policy Scan (PDF report)
+      # ------------------------------------------------------------
+      - name: Run Policy Scan & Download PDF
+        run: |
+          ./veracode policy-scan \
+            -vid ${{ secrets.VERACODE_API_ID }} \
+            -vkey ${{ secrets.VERACODE_API_KEY }} \
+            -appname "Verademo-Test" \
+            -file app.zip \
+            -createprofile true \
+            -autoscan true \
+            -pdf-report Verademo-Policy-Report.pdf
 
-        java -jar veracode-pipeline/pipeline-scan.jar \
-          --vid $VERACODE_API_ID \
-          --vkey $VERACODE_API_KEY \
-          --file app.zip \
-          --json_output pipeline-results.json \
-          --summary_output pipeline-summary.txt \
-          --fail_on_severity none
+      # ------------------------------------------------------------
+      # Step 7: Upload JSON report
+      # ------------------------------------------------------------
+      - name: Upload JSON Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode-json-report
+          path: Verademo-Scan-Report.json
 
-    # ------------------------------------------------------------
-    # Upload Pipeline Scan artifacts
-    # ------------------------------------------------------------
-    - name: Upload Pipeline Scan Results
-      uses: actions/upload-artifact@v4
-      with:
-        name: pipeline-scan-results
-        path: |
-          pipeline-results.json
-          pipeline-summary.txt
+      # ------------------------------------------------------------
+      # Step 8: Upload Summary report
+      # ------------------------------------------------------------
+      - name: Upload Summary Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode-summary-report
+          path: Verademo-Scan-Summary.txt
 
-    # ------------------------------------------------------------
-    # POLICY SCAN (UPLOAD & START)
-    # ------------------------------------------------------------
-    - name: Upload for Policy Scan
-      env:
-        VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-        VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
-      run: |
-        veracode static scan upload \
-          --app-name "$APP_NAME" \
-          --create-profile true \
-          --file app.zip
+      # ------------------------------------------------------------
+      # Step 9: Upload Filtered JSON report
+      # ------------------------------------------------------------
+      - name: Upload Filtered JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode-filtered-report
+          path: filtered_results.json
 
-    # ------------------------------------------------------------
-    # WAIT FOR POLICY SCAN COMPLETION
-    # ------------------------------------------------------------
-    - name: Wait for Policy Scan
-      env:
-        VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-        VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
-      run: |
-        veracode static scan wait \
-          --app-name "$APP_NAME"
-
-    # ------------------------------------------------------------
-    # DOWNLOAD POLICY SCAN PDF
-    # ------------------------------------------------------------
-    - name: Download Policy Scan PDF
-      env:
-        VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-        VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
-      run: |
-        veracode static report download \
-          --app-name "$APP_NAME" \
-          --format pdf \
-          --output Verademo-Policy-Scan.pdf
-
-    # ------------------------------------------------------------
-    # Upload Policy Scan PDF
-    # ------------------------------------------------------------
-    - name: Upload Policy Scan PDF
-      uses: actions/upload-artifact@v4
-      with:
-        name: veracode-policy-scan-pdf
-        path: Verademo-Policy-Scan.pdf
+      # ------------------------------------------------------------
+      # Step 10: Upload Policy Scan PDF
+      # ------------------------------------------------------------
+      - name: Upload Policy Scan PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode-policy-pdf
+          path: Verademo-Policy-Report.pdf
