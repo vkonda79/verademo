@@ -37,7 +37,7 @@ jobs:
               create_profile: false
               version: ${{ github.sha }}
               wait_for_scan: true
-              artifact_name: "veracode_scan_results"   # ✅ valid GitHub artifact name (no spaces)
+              artifact_name: veracode_scan_results   
 
 
       # Download Veracode CLI
