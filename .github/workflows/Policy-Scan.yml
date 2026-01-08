@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      # 7️⃣ Generate PDF report
+      # 6️⃣ Generate PDF report using Veracode Java API
       - name: Generate PDF report
         run: |
           java -jar tools/VeracodeJavaAPI.jar \
@@ -22,7 +22,7 @@ jobs:
             -format pdf \
             -outputfilepath veracode_scan_report.pdf
 
-      # 8️⃣ Upload PDF artifact
+      # 7️⃣ Upload PDF artifact
       - name: Upload PDF report
         uses: actions/upload-artifact@v4
         with:
