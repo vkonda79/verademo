@@ -20,17 +20,11 @@ jobs:
 
       - name: Veracode Static Analysis (SAST)
         run: |
-          # 1. Create the .veracode directory in the runner's home folder
-          mkdir -p $HOME/.veracode
+          # We use 'export' to ensure the sub-processes of the CLI can see them
+          export VERACODE_API_KEY_ID="${{ secrets.VERACODE_API_ID }}"
+          export VERACODE_API_KEY_SECRET="${{ secrets.VERACODE_API_KEY }}"
           
-          # 2. Create the credentials file with the expected format
-          # Note: Use printf to avoid issues with special characters in keys
-          printf "[default]\nveracode_api_key_id = %s\nveracode_api_key_secret = %s\n" \
-            "${{ secrets.VERACODE_API_ID }}" \
-            "${{ secrets.VERACODE_API_KEY }}" > $HOME/.veracode/credentials
-          
-          # 3. Run the scan
-          ./veracode static scan . --results-file results.json
+          ./veracode static scan . --results-file results.json          
           
       - name: Veracode Software Composition Analysis (SCA)
         run: |
