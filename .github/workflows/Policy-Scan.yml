@@ -26,17 +26,21 @@ jobs:
           java-version: 17
 
       # ----------------------------------------------------
-      # 3. Download Veracode CLIs
+      # 3. Download Veracode tools (FIXED)
       # ----------------------------------------------------
       - name: Download Veracode Tools
         run: |
-          # Pipeline Scan
-          curl -sL https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
+          # Download Pipeline Scan
+          curl -fL https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
           unzip -o pipeline-scan.zip -d veracode-pipeline
-
-          # Veracode Java API Wrapper (CLI)
-          curl -sL https://repo1.maven.org/maven2/com/veracode/api/wrappers/veracode-java-api-wrapper/23.10.10.0/veracode-java-api-wrapper-23.10.10.0.jar \
+      
+          # Download Veracode Java API Wrapper (Policy Scan / PDF)
+          curl -fL https://repo1.maven.org/maven2/com/veracode/api/wrappers/veracode-java-api-wrapper/23.8.5.0/veracode-java-api-wrapper-23.8.5.0.jar \
             -o VeracodeJavaAPI.jar
+      
+          # Validate JAR (prevents "invalid or corrupt jarfile")
+          file VeracodeJavaAPI.jar
+          jar tf VeracodeJavaAPI.jar | head
 
       # ----------------------------------------------------
       # 4. Package application
