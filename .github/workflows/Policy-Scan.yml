@@ -29,7 +29,7 @@ jobs:
       # ------------------------------------------------------------
       # Step 3: Install Veracode CLI v2
       # ------------------------------------------------------------
-      - name: Install Veracode CLI
+      - name: Install Veracode CLI v2
         run: |
           curl -fsS https://tools.veracode.com/veracode-cli/install | sh
           chmod +x veracode
@@ -43,16 +43,15 @@ jobs:
         run: zip -r app.zip .
 
       # ------------------------------------------------------------
-      # Step 5: Run Veracode Pipeline Scan using CLI v2
+      # Step 5: Run Pipeline Scan (CLI v2)
       # ------------------------------------------------------------
       - name: Run Pipeline Scan
         run: |
-          ./veracode uploadandscan \
+          ./veracode scan pipeline \
             -vid ${{ secrets.VERACODE_API_ID }} \
             -vkey ${{ secrets.VERACODE_API_KEY }} \
             -appname "Verademo-Test" \
-            -createprofile true \
-            -autoscan true \
+            -stage Testing \
             -file app.zip \
             -fail-on-severity low \
             -json-report Verademo-Scan-Report.json \
@@ -64,13 +63,11 @@ jobs:
       # ------------------------------------------------------------
       - name: Run Policy Scan & Download PDF
         run: |
-          ./veracode policy-scan \
+          ./veracode scan policy \
             -vid ${{ secrets.VERACODE_API_ID }} \
             -vkey ${{ secrets.VERACODE_API_KEY }} \
             -appname "Verademo-Test" \
             -file app.zip \
-            -createprofile true \
-            -autoscan true \
             -pdf-report Verademo-Policy-Report.pdf
 
       # ------------------------------------------------------------
