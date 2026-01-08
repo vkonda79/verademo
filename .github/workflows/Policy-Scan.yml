@@ -27,7 +27,7 @@ jobs:
 
       - name: Download Veracode CLI
         run: |
-          curl -fsS https://tools.veracode.com/veracode-cli/install | VERACODE_CLI_VERSION=2.35.0 sh
+          curl -fsS https://tools.veracode.com/veracode-cli/install | sh
           chmod +x veracode-cli.jar
       
       - name: Run Veracode CLI to get PDF
