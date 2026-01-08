@@ -52,13 +52,12 @@ jobs:
           ls -lh tools/VeracodeJavaAPI.jar
           file tools/VeracodeJavaAPI.jar
 
-      # 7️⃣ Generate PDF report using VeracodeJavaAPI.jar
       - name: Generate PDF report
         run: |
-          java -jar tools/VeracodeJavaAPI.jar \            
-          -vid "${{ secrets.VERACODE_API_ID }}" \
+          java -jar tools/VeracodeJavaAPI.jar \
+            getreport \
+            -vid "${{ secrets.VERACODE_API_ID }}" \
             -vkey "${{ secrets.VERACODE_API_KEY }}" \
-            -action getreport \
             -appid "${{ secrets.VERACODE_API_ID_VAL }}" \
             -sandboxname "${{ secrets.SANDBOX_NAME }}" \
             -format pdf \
