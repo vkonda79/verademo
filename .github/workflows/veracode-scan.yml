@@ -49,7 +49,7 @@ jobs:
       # Generate a human-readable summary
       - name: Generate summary
         run: |
-          jq -r '.issues[] | "\(.severity) - \(.cweId) - \(.module) - \(.file)"' filtered_results.json > Verademo-Scan-Summary.txt
+          jq -r '.issues // [] | "\(.severity) - \(.cweId) - \(.module) - \(.file)"' filtered_results.json > Verademo-Scan-Summary.txt
       
       # Upload JSON and summary
       - name: Upload reports
