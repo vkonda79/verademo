@@ -45,24 +45,21 @@ jobs:
             -jf Verademo-Scan-Report.json \
             -fjf filtered_results.json \
             -fs low
-
-      # Step 6: Upload JSON report
-      - name: Upload JSON Report
+            
+      # Generate a human-readable summary
+      - name: Generate summary
+        run: |
+          jq -r '.issues[] | "\(.severity) - \(.cweId) - \(.module) - \(.file)"' filtered_results.json > Verademo-Scan-Summary.txt
+      
+      # Upload JSON and summary
+      - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
           name: veracode-json-report
-          path: Verademo-Scan-Report.json
-
-      # Step 7: Upload Summary report
-      - name: Upload Summary Report
+          path: results.json
+      
+      - name: Upload summary
         uses: actions/upload-artifact@v4
         with:
           name: veracode-summary-report
           path: Verademo-Scan-Summary.txt
-
-      # Step 8: Upload Filtered JSON report (always generated)
-      - name: Upload Filtered JSON Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: veracode-filtered-report
-          path: filtered_results.json
