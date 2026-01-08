@@ -25,29 +25,18 @@ jobs:
       - name: Package code
         run: zip -r artifact.zip . -x "*.git*"
 
-      # 3) Run Veracode Pipeline Scan
-      - name: Run Veracode pipeline scan
-        uses: veracode/Veracode-pipeline-scan-action@v1.0.12
-        with:
-          vid: ${{ secrets.VERACODE_API_ID }}
-          vkey: ${{ secrets.VERACODE_API_KEY }}
-          file: artifact.zip
-          json_output_file: results.json
-          summary_output_file: summary.txt
-          token: ${{ secrets.VERACODE_API_TOKEN }}
+      - name: Download Veracode CLI
+        run: |
+          curl -L -o veracode-cli.jar https://downloads.veracode.com/securityscan/pipeline/veracode-cli-LATEST-all.jar
+          chmod +x veracode-cli.jar
       
-      # ✅ Manually upload JSON results as GitHub artifacts
-      - name: Upload Veracode JSON results
-        uses: actions/upload-artifact@v4
-        with:
-          name: veracode_json_results
-          path: |
-            results.json
-            filtered_results.json
-      
-      # Optional: Upload summary
-      - name: Upload summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: veracode_summary
-          path: summary.txt
+      - name: Run Veracode CLI to get PDF
+        run: |
+          java -jar veracode-cli.jar \
+            -appid "${{ secrets.APP_NAME }}" \
+            -sandboxname "${{ secrets.SANDBOX_NAME }}" \
+            -action getreport \
+            -reportformat pdf \
+            -reportname veracode_scan_report.pdf \
+            -vid "${{ secrets.VERACODE_API_ID }}" \
+            -vkey "${{ secrets.VERACODE_API_KEY }}"
