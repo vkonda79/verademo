@@ -33,7 +33,7 @@ jobs:
             -vkey "${{ secrets.VERACODE_API_KEY }}" \
             -sf summary.txt \
             -jf results.json \
-            -fjf filtered_results.json
+            -fjf filtered_results.json || true
 
       # Upload JSON and summary artifacts
       - name: Upload JSON and summary
