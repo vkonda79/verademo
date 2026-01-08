@@ -36,7 +36,7 @@ jobs:
       
       - name: Run Veracode CLI to get PDF
         run: |
-          java -jar veracode-cli.jar \
+          java -jar pipeline-scan.jar \
             -appid "${{ secrets.APP_NAME }}" \
             -sandboxname "${{ secrets.SANDBOX_NAME }}" \
             -action getreport \
