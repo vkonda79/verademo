@@ -15,7 +15,7 @@ jobs:
             curl -fsS https://tools.veracode.com/veracode-cli/install | sh
             #chmod +x veracode-cli.jar
             # check file
-            ls -lh veracode-cli.jar
+            ls *.jar
             file veracode-cli.jar
             
             
