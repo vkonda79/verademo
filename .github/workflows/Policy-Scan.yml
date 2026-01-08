@@ -41,7 +41,7 @@ jobs:
     - name: Install Veracode CLI (global)
       run: |
         curl -fsS https://tools.veracode.com/veracode-cli/install | sh -s -- -b /usr/local/bin
-        #veracode version
+        veracode version
 
     # ------------------------------------------------------------
     # PIPELINE SCAN (FAST, NO POLICY GATE)
