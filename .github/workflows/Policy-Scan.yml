@@ -22,17 +22,22 @@ jobs:
       #     mvn -B package --file pom.xml
       #   # or your build command
 
+      - name: Package code
+        run: zip -r artifact.zip . -x "*.git*"
+
       # 3) Run Veracode Pipeline Scan
       - name: Run Veracode pipeline scan
         uses: veracode/Veracode-pipeline-scan-action@v1.0.12
-        id: pipeline-scan
         with:
-          vid: ${{ secrets.VERACODE_API_ID }}
-          vkey: ${{ secrets.VERACODE_API_KEY }}
-          file: "./"                 # path to output artifact or source
-          # Optional:
-          # veracode_policy_name: "MyPolicy"
-          # fail_on_severity: "Very High, High"
+              vid: ${{ secrets.VERACODE_API_ID }}
+              vkey: ${{ secrets.VERACODE_API_KEY }}
+              file: "artifact.zip"          # Must be a valid file
+              app_name: ${{ secrets.APP_NAME }}
+              sandbox_name: ${{ secrets.SANDBOX_NAME }}
+              create_profile: false
+              version: ${{ github.sha }}
+              wait_for_scan: true
+
 
       # Download Veracode CLI
       - name: Download Veracode CLI
