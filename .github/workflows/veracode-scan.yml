@@ -44,14 +44,16 @@ jobs:
             -fs high
       
       # Step 6: Download PDF Report
-      - name: Get Scan PDF Report
+      - name: Get JSON Scan Report
         run: |
           java -jar veracode-cli/pipeline-scan.jar \
             -vid ${{ secrets.VERACODE_API_ID }} \
             -vkey ${{ secrets.VERACODE_API_KEY }} \
-            -appname "Verademo-Test" \
-            -sandboxname "CI-Sandbox" \
-            -downloadpdf "Verademo-Scan-Report.pdf"            
+            -p "Verademo-Test" \
+            -ds Testing \
+            -f app.zip \
+            -jf Verademo-Scan-Report.json
+
       
       # Step 7: Upload PDF as Artifact in GitHub
       - name: Upload PDF Report
