@@ -51,12 +51,12 @@ jobs:
         with:
           name: veracode-json-report
           path: Verademo-Scan-Report.json
-      # Step 7: Upload Summary report
+          
+
+     # Step 7: Upload Summary report
       - name: Upload Summary Report
         uses: actions/upload-artifact@v4
         with:
           name: veracode-summary-report
           path: ${{ github.workspace }}/Verademo-Scan-Summary.txt
-              with:
-                name: veracode-summary-report
-                path: Verademo-Scan-Summary.txt
+
