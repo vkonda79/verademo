@@ -20,11 +20,17 @@ jobs:
 
       - name: Veracode Static Analysis (SAST)
         run: |
-          # We use 'export' to ensure the sub-processes of the CLI can see them
+          # 1. Set credentials
           export VERACODE_API_KEY_ID="${{ secrets.VERACODE_API_ID }}"
           export VERACODE_API_KEY_SECRET="${{ secrets.VERACODE_API_KEY }}"
           
-          ./veracode static scan . --results-file results.json          
+          # 2. Package the current directory
+          # This creates a veracode-package.zip by default
+          ./veracode package --source . --output veracode-artifacts --trust
+          
+          # 3. Scan the generated artifact
+          # We point the scan at the directory created by the package command
+          ./veracode static scan veracode-artifacts/ --results-file results.json
           
       - name: Veracode Software Composition Analysis (SCA)
         run: |
