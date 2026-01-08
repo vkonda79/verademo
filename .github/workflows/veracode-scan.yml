@@ -32,7 +32,7 @@ jobs:
       - name: Prepare Artifact
         run: zip -r app.zip .
 
-      # Step 5: Run Veracode scan (fail only on high severity)
+     # Step 5: Run Veracode scan (fail only on high severity)
       - name: Run Veracode Pipeline Scan
         run: |
           java -jar veracode-cli/pipeline-scan.jar \
@@ -41,8 +41,8 @@ jobs:
             -p "Verademo-Test" \
             -ds Testing \
             -f app.zip \
-            -sf Verademo-Scan-Summary.txt \
-            -jf Verademo-Scan-Report.json \
+            -sf ${{ github.workspace }}/Verademo-Scan-Summary.txt \
+            -jf ${{ github.workspace }}/Verademo-Scan-Report.json \
             -fs high
 
       # Step 6: Upload JSON report
@@ -51,10 +51,13 @@ jobs:
         with:
           name: veracode-json-report
           path: Verademo-Scan-Report.json
-
       # Step 7: Upload Summary report
       - name: Upload Summary Report
         uses: actions/upload-artifact@v4
         with:
           name: veracode-summary-report
-          path: Verademo-Scan-Summary.txt
+          path: ${{ github.workspace }}/Verademo-Scan-Summary.txt
+      
+              with:
+                name: veracode-summary-report
+                path: Verademo-Scan-Summary.txt
