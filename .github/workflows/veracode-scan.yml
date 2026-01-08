@@ -37,10 +37,11 @@ jobs:
           java -jar veracode-cli/pipeline-scan.jar \
             -vid ${{ secrets.VERACODE_API_ID }} \
             -vkey ${{ secrets.VERACODE_API_KEY }} \
-            -appname "Verademo-Test" \
-            -sandboxname "CI-Sandbox" \
-            -createprofile true \
-            -filepath "app.zip"
+            -p "Verademo-Test" \
+            -ds Testing \
+            -f app.zip \
+            -sf Verademo-Scan-Summary.txt \
+            -fs high
       
       # Step 6: Download PDF Report
       - name: Get Scan PDF Report
