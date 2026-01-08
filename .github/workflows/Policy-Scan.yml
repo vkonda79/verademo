@@ -25,7 +25,11 @@ jobs:
       # Step 3.3: Download Veracode CLI
       - name: Download Veracode CLI
         run: |
+          rm -f veracode.jar
           curl -L -o veracode.jar https://downloads.veracode.com/securityscan/pipeline/veracode-cli-LATEST-all.jar
+          ls -lh veracode.jar
+          file veracode.jar
+
 
       # Step 3.4: Run Veracode scan
       - name: Run Veracode Scan
