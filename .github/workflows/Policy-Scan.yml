@@ -25,11 +25,12 @@ jobs:
             --results-file results.json \
         env:
           VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-          VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
+          VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
+
       - name: Veracode Software Composition Analysis (SCA)
         run: |
           # Scans for vulnerable open-source dependencies
           veracode sca scan .
         env:
           VERACODE_API_ID: ${{ secrets.VERACODE_API_ID }}
-          VERACODE_API_KEY: ${{ secrets.VERACODE_API_KEY }}
+          VERACODE_API_KEY: ${{ secrets.VERACODE_API_SECRET }}
