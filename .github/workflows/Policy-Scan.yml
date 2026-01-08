@@ -11,6 +11,7 @@ jobs:
     steps:
 
       - name: Download Veracode CLI
+        run: |
             curl -fsS https://tools.veracode.com/veracode-cli/install | sh
             chmod +x veracode-cli.jar
             
