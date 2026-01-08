@@ -58,7 +58,7 @@ jobs:
               -action getreport \
               -vid "${{ secrets.VERACODE_API_ID }}" \
               -vkey "${{ secrets.VERACODE_API_KEY }}" \
-              -appid "${{ secrets.APP_ID }}" \
+              -appid "${{ secrets.VERACODE_API_ID_VAL }}" \
               -sandboxname "${{ secrets.SANDBOX_NAME }}" \
               -format pdf \
               -outputfilepath veracode_scan_report.pdf
