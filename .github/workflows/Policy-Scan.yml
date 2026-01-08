@@ -28,13 +28,15 @@ jobs:
       # ----------------------------------------------------
       # 3. Download Veracode CLIs
       # ----------------------------------------------------
-      - name: Download Veracode CLIs
+      - name: Download Veracode Tools
         run: |
+          # Pipeline Scan
           curl -sL https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
           unzip -o pipeline-scan.zip -d veracode-pipeline
 
-          curl -sL https://repo1.maven.org/maven2/com/veracode/vosp/api/wrappers/vosp-api-wrappers-java/24.9.0.0/vosp-api-wrappers-java-24.9.0.0.jar \
-            -o veracode-upload.jar
+          # Veracode Java API Wrapper (CLI)
+          curl -sL https://repo1.maven.org/maven2/com/veracode/api/wrappers/veracode-java-api-wrapper/23.10.10.0/veracode-java-api-wrapper-23.10.10.0.jar \
+            -o VeracodeJavaAPI.jar
 
       # ----------------------------------------------------
       # 4. Package application
@@ -72,7 +74,7 @@ jobs:
       - name: Upload & Start Policy Scan
         if: always()
         run: |
-          java -jar veracode-upload.jar uploadandscan \
+          java -jar VeracodeJavaAPI.jar uploadandscan \
             -vid ${{ secrets.VERACODE_API_ID }} \
             -vkey ${{ secrets.VERACODE_API_KEY }} \
             -appname "Verademo-Test" \
@@ -86,7 +88,7 @@ jobs:
       - name: Wait for Policy Scan Completion
         if: always()
         run: |
-          java -jar veracode-upload.jar scanstatus \
+          java -jar VeracodeJavaAPI.jar scanstatus \
             -vid ${{ secrets.VERACODE_API_ID }} \
             -vkey ${{ secrets.VERACODE_API_KEY }} \
             -appname "Verademo-Test"
@@ -97,7 +99,7 @@ jobs:
       - name: Download Policy Scan PDF
         if: always()
         run: |
-          java -jar veracode-upload.jar report \
+          java -jar VeracodeJavaAPI.jar report \
             -vid ${{ secrets.VERACODE_API_ID }} \
             -vkey ${{ secrets.VERACODE_API_KEY }} \
             -appname "Verademo-Test" \
