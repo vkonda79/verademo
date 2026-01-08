@@ -1,0 +1,115 @@
+name: Veracode Pipeline + Policy Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  veracode:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ----------------------------------------------------
+      # 1. Checkout source
+      # ----------------------------------------------------
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------
+      # 2. Setup Java
+      # ----------------------------------------------------
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # ----------------------------------------------------
+      # 3. Download Veracode CLIs
+      # ----------------------------------------------------
+      - name: Download Veracode CLIs
+        run: |
+          curl -sL https://downloads.veracode.com/securityscan/pipeline-scan-LATEST.zip -o pipeline-scan.zip
+          unzip -o pipeline-scan.zip -d veracode-pipeline
+
+          curl -sL https://repo1.maven.org/maven2/com/veracode/vosp/api/wrappers/vosp-api-wrappers-java/24.9.0.0/vosp-api-wrappers-java-24.9.0.0.jar \
+            -o veracode-upload.jar
+
+      # ----------------------------------------------------
+      # 4. Package application
+      # ----------------------------------------------------
+      - name: Package Application
+        run: zip -r app.zip .
+
+      # ----------------------------------------------------
+      # 5. Pipeline Scan (CI Gate)
+      # ----------------------------------------------------
+      - name: Veracode Pipeline Scan
+        run: |
+          java -jar veracode-pipeline/pipeline-scan.jar \
+            -vid ${{ secrets.VERACODE_API_ID }} \
+            -vkey ${{ secrets.VERACODE_API_KEY }} \
+            -p "Verademo-Test" \
+            -ds Testing \
+            -f app.zip \
+            -jf pipeline-results.json \
+            -fs high
+
+      # ----------------------------------------------------
+      # 6. Upload Pipeline Scan Results
+      # ----------------------------------------------------
+      - name: Upload Pipeline Scan JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-scan-json
+          path: pipeline-results.json
+
+      # ----------------------------------------------------
+      # 7. Upload & Start Policy Scan
+      #    (runs even if Pipeline Scan fails)
+      # ----------------------------------------------------
+      - name: Upload & Start Policy Scan
+        if: always()
+        run: |
+          java -jar veracode-upload.jar uploadandscan \
+            -vid ${{ secrets.VERACODE_API_ID }} \
+            -vkey ${{ secrets.VERACODE_API_KEY }} \
+            -appname "Verademo-Test" \
+            -createprofile true \
+            -autoscan true \
+            -filepath app.zip
+
+      # ----------------------------------------------------
+      # 8. Wait for Policy Scan to Finish
+      # ----------------------------------------------------
+      - name: Wait for Policy Scan Completion
+        if: always()
+        run: |
+          java -jar veracode-upload.jar scanstatus \
+            -vid ${{ secrets.VERACODE_API_ID }} \
+            -vkey ${{ secrets.VERACODE_API_KEY }} \
+            -appname "Verademo-Test"
+
+      # ----------------------------------------------------
+      # 9. Download Policy Scan PDF
+      # ----------------------------------------------------
+      - name: Download Policy Scan PDF
+        if: always()
+        run: |
+          java -jar veracode-upload.jar report \
+            -vid ${{ secrets.VERACODE_API_ID }} \
+            -vkey ${{ secrets.VERACODE_API_KEY }} \
+            -appname "Verademo-Test" \
+            -format pdf \
+            -output Veracode-Policy-Scan-Report.pdf
+
+      # ----------------------------------------------------
+      # 10. Upload Policy Scan PDF
+      # ----------------------------------------------------
+      - name: Upload Policy Scan PDF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode-policy-scan-pdf
+          path: Veracode-Policy-Scan-Report.pdf
