@@ -34,27 +34,20 @@ jobs:
           file: artifact.zip
           json_output_file: results.json
           summary_output_file: summary.txt
-
-
-      # Download Veracode CLI
-      - name: Download Veracode CLI
-        run: |
-          curl -L -o veracode-cli.jar https://downloads.veracode.com/securityscan/pipeline/veracode-cli-LATEST-all.jar
-
-      # Get PDF detailed report
-      - name: Download PDF report
-        run: |
-          java -jar veracode-cli.jar \
-            -appid "${{ secrets.APP_NAME }}" \
-            -sandboxname "${{ secrets.SANDBOX_NAME }}" \
-            -action getreport \
-            -reportformat pdf \
-            -reportname "veracode_scan_report.pdf" \
-            -vid "${{ secrets.VERACODE_API_ID }}" \
-            -vkey "${{ secrets.VERACODE_API_KEY }}"
-
-      - name: Upload PDF
+          token: ${{ secrets.VERACODE_API_TOKEN }}
+      
+      # ✅ Manually upload JSON results as GitHub artifacts
+      - name: Upload Veracode JSON results
         uses: actions/upload-artifact@v4
         with:
-          name: veracode_pdf_report
-          path: veracode_scan_report.pdf
+          name: veracode_json_results
+          path: |
+            results.json
+            filtered_results.json
+      
+      # Optional: Upload summary
+      - name: Upload summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: veracode_summary
+          path: summary.txt
