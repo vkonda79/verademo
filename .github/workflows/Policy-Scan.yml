@@ -42,8 +42,11 @@ jobs:
       run: |
         curl -fsS https://tools.veracode.com/veracode-cli/install | sh
         echo "$PWD" >> $GITHUB_PATH
-        veracode version
+      # veracode version
 
+    - name: Run Veracode version
+      run: |
+        ./veracode version
 
     # ------------------------------------------------------------
     # PIPELINE SCAN (FAST, NO POLICY GATE)
